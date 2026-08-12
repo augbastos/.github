@@ -4,6 +4,10 @@
     "augbastos/wavr": {
       "last_run": "2026-08-12T01:54:40.417599+00:00",
       "last_outcome": "skipped_busy"
+    },
+    "augbastos/scpe": {
+      "last_run": "2026-08-12T01:55:17.209377+00:00",
+      "last_outcome": "skipped_no_work"
     }
   },
   "history": [
@@ -12,6 +16,12 @@
       "repo": "augbastos/wavr",
       "outcome": "skipped_busy",
       "detail": "live Jules session 5738273773848449738 (IN_PROGRESS)"
+    },
+    {
+      "ts": "2026-08-12T01:55:17.209397+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
     }
   ]
 }
