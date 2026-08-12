@@ -2,11 +2,12 @@
   "schema_version": 1,
   "repos": {
     "augbastos/wavr": {
-      "last_run": "2026-08-12T01:54:40.417599+00:00",
-      "last_outcome": "skipped_busy"
+      "last_run": "2026-08-12T14:44:28.063287+00:00",
+      "last_outcome": "delegated",
+      "last_session": "8399304794741113534"
     },
     "augbastos/scpe": {
-      "last_run": "2026-08-12T01:55:17.209377+00:00",
+      "last_run": "2026-08-12T14:44:29.943420+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/devcard": {
@@ -19,6 +20,10 @@
     },
     "augbastos/scrcpy-tray": {
       "last_run": "2026-08-12T13:16:30.730730+00:00",
+      "last_outcome": "skipped_no_work"
+    },
+    "augbastos/deputy-mcp": {
+      "last_run": "2026-08-12T14:44:25.596779+00:00",
       "last_outcome": "skipped_no_work"
     }
   },
@@ -50,6 +55,25 @@
     {
       "ts": "2026-08-12T13:16:30.730748+00:00",
       "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-12T14:44:25.596793+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-12T14:44:28.063300+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "delegated",
+      "session": "8399304794741113534",
+      "task": "Fix the failing tests workflow on master"
+    },
+    {
+      "ts": "2026-08-12T14:44:29.943435+00:00",
+      "repo": "augbastos/scpe",
       "outcome": "skipped_no_work",
       "detail": "no failing CI and no actionable open issue"
     }
