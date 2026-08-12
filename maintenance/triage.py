@@ -19,9 +19,16 @@ Design rules, in priority order:
      live for the same repository, and nothing new at all once the review
      backlog reaches MAX_OPEN_MAINTENANCE_PRS. Review capacity is the scarce
      resource, not Jules quota - a queue nobody can read gets rubber-stamped.
-  5. UNTRUSTED TEXT IS NOT A WORK ORDER. The maintained repositories are public,
+  5. UNTRUSTED TEXT IS NOT A WORK ORDER. Most maintained repositories are public,
      so an issue body is input from the internet, not an instruction. Only
      authors with write-level trust can become a brief (TRUSTED_ASSOCIATIONS).
+     The rule stays on for private repositories too: trust is about who wrote the
+     text, not about who can read the repository.
+  6. VISIBILITY IS NOT SCOPE. A private repository is reachable only with an
+     explicit read token, and what may be worked on there is narrowed further by
+     its scope profile. Lucky Cat lives in one repository together with payments,
+     auth and RLS - "the loop may read it" must never imply "the loop may touch
+     all of it".
 
 Standard library only: the runner should not need a dependency install to decide
 whether to do nothing.
@@ -69,12 +76,34 @@ MAX_OPEN_MAINTENANCE_PRS = 5
 ORCHESTRATOR_REPO = "augbastos/.github"
 AMBER_LABEL = "needs-augusto"
 
-# Issue authors whose text may become an agent brief. The repositories are
+# Issue authors whose text may become an agent brief. Most repositories are
 # public, so anyone on the internet can open an issue, and `find_work` feeds the
 # issue title and body straight into the prompt Jules executes - a stranger's
 # text would be agent instructions. Only people who already have write-level
 # trust on the repository qualify. GitHub returns this as `author_association`.
 TRUSTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
+
+# Repositories that carry this GitHub topic are the Lucky Cat product family and
+# join the rotation on their own, enabled, as soon as they exist. That is a
+# deliberate exception to "automation never adds a repository": Augusto asked for
+# every new Lucky Cat service to be maintained without him wiring it up first.
+#
+# The exception is bounded three ways, and all three matter:
+#   - the topic is set by a human on the repository, so a repo opts IN by being
+#     tagged; nothing is discovered by name-guessing.
+#   - discovery may only ADD. An entry already in repos.json is never rewritten,
+#     so a repository Augusto turned off stays off forever.
+#   - auto-added entries land on the narrow scope profile, never on 'full'.
+FAMILY_TOPIC = "lucky-cat"
+FAMILY_SCOPE_PROFILE = "maintenance_lite"
+
+# What a repository's scope profile allows. 'full' is the historical behaviour:
+# any non-sensitive work the evidence justifies. 'maintenance_lite' exists for
+# repositories where product logic and money live in the same tree as the tests -
+# Lucky Cat is one repository containing Tillr, Ownly and PitchPilot alongside
+# Stripe, auth and RLS. There, the sensitivity gate alone is not enough: it reads
+# the brief, and a brief can be innocent while the change is not.
+SCOPE_PROFILES = {"full", "maintenance_lite"}
 
 
 def utc_now():
@@ -120,6 +149,90 @@ def http_json(url, token=None, method="GET", body=None, api_key=None, timeout=45
 def load_repos():
     with open(REPOS_FILE, encoding="utf-8") as f:
         return json.load(f)["repos"]
+
+
+def save_repos(repos):
+    """Write the allowlist back, preserving the header comment that explains it."""
+    with open(REPOS_FILE, encoding="utf-8") as f:
+        doc = json.load(f)
+    doc["repos"] = repos
+    with open(REPOS_FILE, "w", encoding="utf-8") as f:
+        json.dump(doc, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def is_private(repo):
+    return (repo.get("visibility") or "public").lower() == "private"
+
+
+def scope_profile(repo):
+    """Never trust the file blindly: an unknown profile is the narrow one.
+
+    A typo in repos.json must not silently widen what an unattended agent may
+    touch, and 'full' is the wide setting. Unknown -> maintenance_lite.
+    """
+    profile = (repo.get("scope_profile") or "full").lower()
+    return profile if profile in SCOPE_PROFILES else FAMILY_SCOPE_PROFILE
+
+
+def drop_unreadable_private(repos, has_private_reader):
+    """Remove private repositories when there is no token that can read them.
+
+    Returns (kept, dropped_names). Reading a private repository with a token that
+    cannot see it returns 404 on every endpoint, and `find_work` reads a 404 as
+    "cannot read workflow runs" - which stops that repo but says nothing about
+    why. Dropping them by name up front turns a confusing per-repo failure into
+    one legible line in the run summary.
+    """
+    if has_private_reader:
+        return repos, []
+    dropped = [r["repo"] for r in repos if r.get("enabled") and is_private(r)]
+    if not dropped:
+        return repos, []
+    return [r for r in repos if not is_private(r)], dropped
+
+
+def discover_family_repos(repos, token):
+    """Add repositories carrying FAMILY_TOPIC that are not in the allowlist yet.
+
+    Returns (new_entries, note). Discovery only ever appends: an existing entry
+    keeps its own `enabled`, priority and scope, so turning a repository off is
+    permanent and this cannot undo a human decision.
+
+    A search failure is not fatal. Discovery is a convenience; failing it stops
+    the new repository from being picked up this run, which is a delay, not a
+    hazard - so it must not take the whole maintenance run down with it.
+    """
+    known = {r["repo"] for r in repos}
+    q = urllib.parse.quote(
+        f"user:augbastos topic:{FAMILY_TOPIC} fork:false archived:false")
+    data, status = http_json(
+        f"{GITHUB_API}/search/repositories?q={q}&per_page=50", token=token)
+    if status != 200 or not isinstance(data.get("items"), list):
+        return [], f"family discovery skipped: {data.get('_error', status)}"
+
+    next_priority = max([r.get("priority", 50) for r in repos] + [0])
+    new_entries = []
+    for item in data["items"]:
+        full = item.get("full_name")
+        if not full or full in known or full == ORCHESTRATOR_REPO:
+            continue
+        next_priority += 1
+        new_entries.append({
+            "repo": full,
+            "enabled": True,
+            "priority": next_priority,
+            "default_branch": item.get("default_branch") or "main",
+            "visibility": "private" if item.get("private") else "public",
+            "scope_profile": FAMILY_SCOPE_PROFILE,
+            "family": FAMILY_TOPIC,
+            "why": (f"AUTO-ADDED: carries the '{FAMILY_TOPIC}' topic. Every Lucky Cat "
+                    f"service is maintained from birth. Narrow scope by default - "
+                    f"widen it only by editing this entry by hand."),
+        })
+    if not new_entries:
+        return [], None
+    return new_entries, f"family discovery added {[e['repo'] for e in new_entries]}"
 
 
 def load_state():
@@ -173,20 +286,31 @@ def gh_paged(path, token, limit=30):
     return data[:limit] if isinstance(data, list) else data
 
 
-def is_maintenance_pr(pr):
+def is_maintenance_pr(pr, jules_prs=frozenset()):
     """Does this open pull request come from the maintenance loop?
 
-    Three markers, and the third is the one that matters. Jules names its branch
-    after the WORK, not after itself: the first real delivery arrived as
-    `fix/test-occupancy-log-5738273773848449738`, with no label and no `jules/`
-    prefix. Matching only the first two markers left `already_busy` blind to a
-    maintenance PR the loop had itself caused - the repository looked free and
-    would have collected a second one on top. The embedded session id (a long
-    run of digits) is the reliable marker.
+    Four markers, in order of how much they can be trusted.
+
+    The first three read the pull request itself, and all three are guesses about
+    naming. Jules names its branch after the WORK, not after itself: the first
+    real delivery arrived as `fix/test-occupancy-log-5738273773848449738`, with no
+    label and no `jules/` prefix - the session id in it was the only tell. Then a
+    delivery arrived on `ci/scpe-reusable`: no label, no prefix, no session id,
+    invisible to all three. Every naming heuristic is one branch name away from
+    being wrong.
+
+    The fourth marker is not a guess. Jules reports the pull request it opened in
+    the session's own outputs (`outputs[].pullRequest.url`), so `jules_prs` is
+    the loop asking the agent what it actually did instead of inferring it from a
+    string. When the Jules key is missing the set is empty and the heuristics are
+    all that is left - degraded, still fail-closed elsewhere.
 
     Deliberately shared with count_open_maintenance_prs: two definitions of
     "is this ours" drift apart, and the drift is silent.
     """
+    key = pr_key(pr.get("html_url"))
+    if key and key in jules_prs:
+        return "Jules reports having opened it"
     labels = [l.get("name") for l in pr.get("labels", [])]
     if PR_LABEL in labels:
         return f"labelled {PR_LABEL}"
@@ -198,7 +322,47 @@ def is_maintenance_pr(pr):
     return None
 
 
-def already_busy(repo, token, jules_key):
+def pr_key(url):
+    """Normalise any GitHub pull request URL to 'owner/repo#number', or None.
+
+    The two sides being compared come from different APIs and do not agree on
+    shape: GitHub hands us `https://github.com/o/r/pull/7`, while Jules reports
+    whatever its own record holds - the browser URL for some sessions, the REST
+    form `https://api.github.com/repos/o/r/pulls/7` for others. Comparing raw
+    strings looks like it works right up until the day Jules returns the other
+    one, and then the brake reads zero again with no error anywhere. Compare
+    identities, not spellings.
+    """
+    if not url:
+        return None
+    m = re.search(r"(?:github\.com/(?:repos/)?)([^/]+)/([^/]+)/pulls?/(\d+)", url)
+    if not m:
+        return None
+    return f"{m.group(1)}/{m.group(2)}#{m.group(3)}"
+
+
+def jules_pull_requests(jules_key):
+    """Pull requests Jules itself reports having opened, as 'owner/repo#number'.
+
+    Returns (keys, error). An error is not empty-set: the caller has to tell
+    "Jules says none" apart from "Jules could not be asked", because the second
+    one silently unblocks a brake that exists to stop duplicate work.
+    """
+    if not jules_key:
+        return frozenset(), None
+    data, status = http_json(f"{JULES_API}/sessions?pageSize=50", api_key=jules_key)
+    if status != 200 or data.get("_error"):
+        return frozenset(), f"cannot list Jules sessions ({data.get('_error', status)})"
+    keys = set()
+    for session in data.get("sessions", []):
+        for output in session.get("outputs", []) or []:
+            key = pr_key((output.get("pullRequest") or {}).get("url"))
+            if key:
+                keys.add(key)
+    return frozenset(keys), None
+
+
+def already_busy(repo, token, jules_key, jules_prs=frozenset()):
     """Anything that means 'work is already in flight here'. Fail closed."""
     owner_repo = repo["repo"]
 
@@ -206,7 +370,7 @@ def already_busy(repo, token, jules_key):
     if prs is None:
         return "cannot list pull requests"
     for pr in prs:
-        why = is_maintenance_pr(pr)
+        why = is_maintenance_pr(pr, jules_prs)
         if why:
             return f"open maintenance PR #{pr['number']} ({why})"
 
@@ -228,7 +392,7 @@ def already_busy(repo, token, jules_key):
     return None
 
 
-def count_open_maintenance_prs(repos, token):
+def count_open_maintenance_prs(repos, token, jules_prs=frozenset()):
     """How many maintenance pull requests are open across the whole allowlist.
 
     Returns (count, details) or (None, reason) when it cannot be determined -
@@ -240,7 +404,7 @@ def count_open_maintenance_prs(repos, token):
         if prs is None:
             return None, f"cannot list pull requests for {r['repo']}"
         for pr in prs:
-            if is_maintenance_pr(pr):
+            if is_maintenance_pr(pr, jules_prs):
                 total += 1
                 details.append(f"{r['repo']}#{pr['number']}")
     return total, details
@@ -362,9 +526,38 @@ def find_work(repo, token):
     return None, None, "no failing CI and no actionable open issue"
 
 
+LITE_SCOPE_BLOCK = """
+ALLOWED WORK - this repository is on a narrow profile, everything else is out of scope
+- tests: add, repair, un-skip, de-flake, extend coverage
+- CI and tooling configuration: workflows, linters, formatters, type checks
+- documentation, comments, README, changelog
+- user-facing strings and translations, without changing what a price, claim or
+  legal text means
+
+NOT ALLOWED HERE, even when it looks small and even when the evidence points at it
+- product or business logic, pricing, order flow, menu or tenant behaviour
+- database schema, queries, or anything under a migrations directory
+- API contracts, request/response shapes, webhooks
+- UI behaviour beyond the literal text of a string
+If the fix requires any of those, say so and change nothing. A correct refusal is
+a successful run here.
+"""
+
+
 def build_brief(repo, kind, title, evidence):
     """A bounded contract. Never 'improve this repository'."""
     branch = repo.get("default_branch") or "main"
+    scope_block = LITE_SCOPE_BLOCK if scope_profile(repo) == "maintenance_lite" else ""
+
+    forbidden = repo.get("forbidden_paths") or []
+    forbidden_block = ""
+    if forbidden:
+        listed = "\n".join(f"- {p}" for p in forbidden)
+        forbidden_block = (
+            "\nPATHS THAT ARE FROZEN - do not read from, write to, or move files here\n"
+            f"{listed}\n"
+            "Touching a frozen path is a failed task even if everything else is right.\n")
+
     return f"""{title}
 
 WHY THIS TASK EXISTS (evidence)
@@ -376,7 +569,9 @@ WHAT TO DO
 - Add or update the tests that would have caught this.
 - Do not change unrelated code, formatting, or dependencies.
 - Base your work on the {branch} branch.
-
+- Name your branch `{BRANCH_PREFIX}/<short-slug>` so the maintenance loop can
+  recognise its own work and not stack a second task on top of it.
+{scope_block}{forbidden_block}
 OUT OF SCOPE - stop and report instead of doing any of these
 - authentication, login or session security
 - payments, Stripe, billing
@@ -434,16 +629,24 @@ def emit(record, summary_lines):
     print(json.dumps(record, indent=2, ensure_ascii=False))
 
 
-def run_one(repo, token, jules_key, args, state):
+def run_one(repo, token, jules_key, args, state, orch_token=None, jules_prs=frozenset()):
     """Triage and possibly delegate ONE repository.
 
     Returns (record, summary_lines, delegated). Every early return still stamps
     rotation state so a permanently-busy or permanently-quiet repository cannot
     pin every future run to itself.
+
+    `token` reads the target repository; `orch_token` writes the approval queue
+    here. They are different credentials on purpose: reading a private product
+    repository must not carry the right to open issues, and the queue must not
+    depend on a token scoped to somebody else's repository.
     """
+    orch_token = orch_token or token
     record = {"timestamp": utc_now(), "repo": repo["repo"], "triage_result": None,
               "task_created": False, "jules_session_id": None, "status": None,
               "branch": None, "pr": None, "summary": None, "tests": None,
+              "scope_profile": scope_profile(repo),
+              "visibility": "private" if is_private(repo) else "public",
               "outcome": None, "dry_run": bool(args.dry_run)}
 
     def stamp(outcome, detail=None):
@@ -455,9 +658,10 @@ def run_one(repo, token, jules_key, args, state):
             entry["detail"] = detail
         state.setdefault("history", []).append(entry)
 
-    log(f"selected {repo['repo']} (priority {repo.get('priority')})")
+    log(f"selected {repo['repo']} (priority {repo.get('priority')}, "
+        f"{record['visibility']}, scope={record['scope_profile']})")
 
-    busy = already_busy(repo, token, jules_key)
+    busy = already_busy(repo, token, jules_key, jules_prs)
     if busy:
         record.update(status="skipped", triage_result=f"already busy: {busy}",
                       outcome="no duplicate work created")
@@ -486,7 +690,8 @@ def run_one(repo, token, jules_key, args, state):
         # AMBER. Not delegated - but no longer silent either. Held work used to
         # be written to state.json and nowhere a human would ever look, so the
         # only person who could approve it never learned it existed.
-        issue_no, why = open_amber_issue(repo, kind, title, evidence, hits, brief, token)
+        issue_no, why = open_amber_issue(repo, kind, title, evidence, hits, brief,
+                                         orch_token)
         record.update(status="refused_sensitive", triage_result=f"{kind}: {title}",
                       outcome=f"sensitive areas {hits} - queued for approval")
         if issue_no:
@@ -544,24 +749,67 @@ def main():
                     help=f"repositories to work through this run (default {MAX_REPOS_PER_RUN})")
     args = ap.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN")
+    # Two credentials with different jobs. GITHUB_TOKEN is the workflow's own
+    # token: scoped to this repository, it can open the approval queue here and
+    # read public repositories, and nothing else. MAINTENANCE_READ_TOKEN is a
+    # read-only fine-grained PAT covering the private product repositories -
+    # without it they are simply not maintained, which is a smaller failure than
+    # running the loop on a credential wide enough to write to them.
+    orch_token = os.environ.get("GITHUB_TOKEN")
+    read_token = os.environ.get("MAINTENANCE_READ_TOKEN") or orch_token
     jules_key = os.environ.get("JULES_API_KEY")
+    has_private_reader = bool(os.environ.get("MAINTENANCE_READ_TOKEN"))
 
     run = {"timestamp": utc_now(), "status": None, "outcome": None,
            "dry_run": bool(args.dry_run), "repos": [], "delegated": 0}
 
-    if not token:
+    if not orch_token:
         run.update(status="fail_closed", outcome="no GITHUB_TOKEN in environment")
         emit(run, ["### Background maintenance", "Refused: no GITHUB_TOKEN."])
         return 1
 
     repos = load_repos()
     state = load_state()
+    notes = []
+
+    # New Lucky Cat services join on their own. Only ever appends - see
+    # discover_family_repos.
+    discovered, note = discover_family_repos(repos, read_token)
+    if note:
+        notes.append(note)
+        log(note)
+    if discovered:
+        repos = repos + discovered
+        # A dry run is allowed to look, never to leave anything behind. The
+        # manual dispatch defaults to dry_run=true, so writing here would let a
+        # "just show me what it would do" click quietly edit the allowlist.
+        if args.dry_run:
+            log("dry run - allowlist NOT written")
+        else:
+            save_repos(repos)
+
+    # A private repository is invisible to the workflow's own token. Reading it
+    # with a token that cannot see it produces 404s that look exactly like "no
+    # work here" - a silent no-op is the worst possible outcome for a loop whose
+    # whole job is to notice things, so drop them loudly instead.
+    repos, blocked = drop_unreadable_private(repos, has_private_reader)
+    if blocked:
+        msg = (f"private repositories skipped, MAINTENANCE_READ_TOKEN is not set: "
+               f"{', '.join(blocked)}")
+        notes.append(msg)
+        log(msg)
+
+    # Ask Jules which pull requests it opened before counting them. Branch-name
+    # heuristics have already been wrong twice; this is the authoritative answer.
+    jules_prs, jules_err = jules_pull_requests(jules_key)
+    if jules_err:
+        notes.append(f"{jules_err} - falling back to branch heuristics for PR ownership")
+        log(notes[-1])
 
     # Review capacity is the brake, not quota. Checked once, before any triage:
     # if the backlog is already at the cap there is no point discovering more.
     enabled = [r for r in repos if r.get("enabled")]
-    open_prs, detail = count_open_maintenance_prs(enabled, token)
+    open_prs, detail = count_open_maintenance_prs(enabled, read_token, jules_prs)
     if open_prs is None:
         run.update(status="fail_closed", outcome=f"backlog unknown: {detail}")
         emit(run, ["### Background maintenance",
@@ -591,13 +839,18 @@ def main():
     lines = ["### Background maintenance",
              f"Backlog: {open_prs}/{MAX_OPEN_MAINTENANCE_PRS} maintenance PRs open. "
              f"Working through {len(selected)} repo(s).", ""]
+    lines.extend(f"_{n}_" for n in notes)
+    if notes:
+        lines.append("")
+    run["notes"] = notes
     exit_code = 0
     for repo in selected:
         # Re-check the cap between repositories: this run may have just filled it.
         if run["delegated"] + open_prs >= MAX_OPEN_MAINTENANCE_PRS and not args.task:
             lines.append(f"**{repo['repo']}** - not reached, backlog cap hit during this run.")
             break
-        record, repo_lines, delegated = run_one(repo, token, jules_key, args, state)
+        record, repo_lines, delegated = run_one(repo, read_token, jules_key, args, state,
+                                                orch_token=orch_token, jules_prs=jules_prs)
         run["repos"].append(record)
         lines.extend(repo_lines)
         if delegated:

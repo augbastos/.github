@@ -170,6 +170,146 @@ check("already_busy ignores a human PR", triage.already_busy(REPO, "t", None), N
 
 
 # --------------------------------------------------------------------------
+print("\n=== PR ownership comes from Jules, not from branch names ===")
+
+# The regression this pins: a delivery arrived on `ci/scpe-reusable` - no label,
+# no jules/ prefix, no session id in the name. All three heuristics missed it, so
+# the backlog brake counted zero while a maintenance PR sat open. Jules reports
+# the PR it opened in the session outputs; that is the marker that cannot drift.
+NAMELESS_PR = {"number": 2, "labels": [], "head": {"ref": "ci/scpe-reusable"},
+               "html_url": "https://github.com/augbastos/wavr/pull/2"}
+
+JULES_SAYS = frozenset(["augbastos/wavr#2"])
+
+check("a PR with no naming marker is invisible to the heuristics",
+      triage.is_maintenance_pr(NAMELESS_PR), None)
+check("the same PR is recognised once Jules reports it",
+      bool(triage.is_maintenance_pr(NAMELESS_PR, JULES_SAYS)), True)
+
+triage.gh_paged = lambda path, token, limit=30: ([NAMELESS_PR] if "/pulls" in path else [])
+count, _ = triage.count_open_maintenance_prs([REPO], "t")
+check("uncounted without the Jules answer", count, 0)
+count, _ = triage.count_open_maintenance_prs([REPO], "t", JULES_SAYS)
+check("counted with it", count, 1)
+check("already_busy agrees",
+      bool(triage.already_busy(REPO, "t", None, JULES_SAYS)), True)
+
+# The two sides of that comparison come from different APIs. GitHub says
+# /pull/2, the Jules record may say /repos/../pulls/2 - matching raw strings
+# would silently stop working the day Jules returns the other spelling.
+check("the browser URL and the REST URL are the same pull request",
+      triage.pr_key("https://github.com/augbastos/wavr/pull/2"),
+      triage.pr_key("https://api.github.com/repos/augbastos/wavr/pulls/2"))
+check("a URL that is not a pull request has no key",
+      triage.pr_key("https://github.com/augbastos/wavr/issues/2"), None)
+check("no URL is not a match", triage.pr_key(None), None)
+check("an unparseable url never matches a real PR",
+      triage.is_maintenance_pr({"html_url": None, "labels": [], "head": {"ref": "x"}},
+                               frozenset([None])), None)
+
+# A failure to reach Jules must be reported, never returned as "no PRs" - the
+# caller has to be able to tell an empty answer from an unanswered question.
+_orig_http = triage.http_json
+triage.http_json = lambda url, **kw: ({"_error": "HTTP 403"}, 403)
+urls, err = triage.jules_pull_requests("key")
+check("an unreachable Jules is an error, not an empty set", (urls, bool(err)),
+      (frozenset(), True))
+triage.http_json = lambda url, **kw: ({"sessions": [
+    {"outputs": [{"pullRequest": {"url": "https://github.com/augbastos/wavr/pull/9"}}]},
+    {"outputs": [{"pullRequest": {"url": "https://api.github.com/repos/augbastos/nock/pulls/3"}}]},
+    {"outputs": [{"artifact": {"url": "https://example/patch.diff"}}]},
+    {"outputs": []},
+    {},
+]}, 200)
+urls, err = triage.jules_pull_requests("key")
+check("session outputs are unwrapped, both URL shapes, non-PR outputs ignored",
+      (sorted(urls), err), (["augbastos/nock#3", "augbastos/wavr#9"], None))
+check("no key means no question asked, not an error",
+      triage.jules_pull_requests(None), (frozenset(), None))
+triage.http_json = _orig_http
+
+
+# --------------------------------------------------------------------------
+print("\n=== scope profiles ===")
+
+LITE = {"repo": "augbastos/lucky-cat", "default_branch": "master",
+        "visibility": "private", "scope_profile": "maintenance_lite",
+        "forbidden_paths": ["site/seocoxinha/**"]}
+
+check("a missing profile stays wide (existing repos keep their behaviour)",
+      triage.scope_profile({"repo": "x"}), "full")
+check("a typo narrows instead of widening",
+      triage.scope_profile({"repo": "x", "scope_profile": "ful"}), "maintenance_lite")
+check("visibility defaults to public", triage.is_private({"repo": "x"}), False)
+check("private is read from the entry", triage.is_private(LITE), True)
+
+lite_brief = triage.build_brief(LITE, "ci_failure", "Fix the failing tests workflow", "run #1 failed")
+check("the narrow brief forbids product logic",
+      "product or business logic" in lite_brief, True)
+check("the narrow brief lists the frozen path",
+      "site/seocoxinha/**" in lite_brief, True)
+check("every brief asks for a jules/ branch",
+      "`jules/<short-slug>`" in lite_brief, True)
+
+full_brief = triage.build_brief(REPO, "ci_failure", "Fix it", "run #1 failed")
+check("the wide brief carries no narrow block",
+      "ALLOWED WORK" in full_brief, False)
+check("the wide brief carries no frozen paths",
+      "FROZEN" in full_brief, False)
+
+
+# --------------------------------------------------------------------------
+print("\n=== private repositories need their own read token ===")
+
+MIXED = [{"repo": "pub", "enabled": True},
+         {"repo": "priv", "enabled": True, "visibility": "private"},
+         {"repo": "priv-off", "enabled": False, "visibility": "private"}]
+
+kept, dropped = triage.drop_unreadable_private(MIXED, False)
+check("a private repo is dropped when no reader token exists", dropped, ["priv"])
+check("the public repo survives", [r["repo"] for r in kept], ["pub"])
+check("a disabled private repo is not announced as blocked",
+      "priv-off" in dropped, False)
+
+kept, dropped = triage.drop_unreadable_private(MIXED, True)
+check("with the token nothing is dropped", (len(kept), dropped), (3, []))
+
+
+# --------------------------------------------------------------------------
+print("\n=== family discovery only ever adds ===")
+
+EXISTING = [{"repo": "augbastos/lucky-cat", "enabled": False, "priority": 7,
+             "why": "turned off by hand"}]
+
+triage.http_json = lambda url, **kw: ({"items": [
+    {"full_name": "augbastos/lucky-cat", "private": True, "default_branch": "master"},
+    {"full_name": "augbastos/new-service", "private": True, "default_branch": "main"},
+]}, 200)
+
+new, note = triage.discover_family_repos(EXISTING, "t")
+check("a repo already in the file is never re-added", len(new), 1)
+check("the new one is added", new[0]["repo"], "augbastos/new-service")
+check("and arrives enabled", new[0]["enabled"], True)
+check("on the narrow profile", new[0]["scope_profile"], "maintenance_lite")
+check("marked private from the API, not guessed", new[0]["visibility"], "private")
+check("the disabled entry keeps its own enabled flag", EXISTING[0]["enabled"], False)
+
+# The orchestrator must never discover itself, whatever topics it carries.
+triage.http_json = lambda url, **kw: ({"items": [
+    {"full_name": triage.ORCHESTRATOR_REPO, "private": False, "default_branch": "main"},
+]}, 200)
+new, _ = triage.discover_family_repos([], "t")
+check("the orchestrator never enters its own allowlist", new, [])
+
+# A search failure is a delay, not a hazard: report it and add nothing.
+triage.http_json = lambda url, **kw: ({"_error": "HTTP 503"}, 503)
+new, note = triage.discover_family_repos([], "t")
+check("a failed search adds nothing", new, [])
+check("and says why", "discovery skipped" in (note or ""), True)
+triage.http_json = _orig_http
+
+
+# --------------------------------------------------------------------------
 print("\n=== rotation ===")
 
 triage.gh_paged = _orig_paged
