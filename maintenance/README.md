@@ -5,12 +5,14 @@ GitHub Actions and executed by [Jules](https://jules.google). It does not need
 any machine of mine to be switched on.
 
 ```
-schedule (Mon + Thu, 06:17 UTC)
-   -> pick the least-recently-maintained enabled repo
-      -> already busy? (open jules/* PR or branch, or a live session)  -> SKIP
+schedule (daily, 06:17 UTC)
+   -> review backlog already at MAX_OPEN_MAINTENANCE_PRS?         -> SKIP THE RUN
+   -> take the MAX_REPOS_PER_RUN least-recently-maintained repos, each:
+      -> already busy? (open maintenance PR or branch, or a live session) -> SKIP
       -> find one justified task: failing CI first, then open issues
-         -> nothing found                                             -> SKIP
-         -> touches a sensitive area                                  -> flag, SKIP
+         (an issue only counts from OWNER / MEMBER / COLLABORATOR)
+         -> nothing found                                          -> SKIP
+         -> touches a sensitive area -> open an approval issue here -> HELD
          -> otherwise: create ONE Jules session (AUTO_CREATE_PR)
             -> Jules opens a branch + pull request
                -> nothing is merged, ever, by this system
@@ -62,12 +64,19 @@ repositories, randomness produces exactly the starvation this avoids.
 
 ## Cost and quota
 
-- GitHub Actions: this repository is public, so the minutes are free. Two runs a
-  week, each a few minutes.
-- Jules: at most **one task per run**, so at most **two per week**. The Google
-  AI Pro allowance is 100 tasks per rolling 24 hours with 15 concurrent, so this
-  uses about 2% of a single day's allowance per week.
+- GitHub Actions: this repository is public, so the minutes are free. One run a
+  day, each a few minutes.
+- Jules: at most `MAX_REPOS_PER_RUN` tasks per run, and never more than one per
+  repository. The Google AI Pro allowance is 100 tasks per rolling 24 hours with
+  15 concurrent, so even a maximal day is a few percent of it.
 - A skipped run costs no Jules quota at all.
+
+**Quota is not what bounds this.** Review capacity is. The real cap is
+`MAX_OPEN_MAINTENANCE_PRS`: once that many maintenance pull requests are open
+across the allowlist, a run creates nothing at all until the queue is cleared.
+A backlog nobody can read gets rubber-stamped, and a rubber-stamped agent patch
+reaching master is the failure this whole system is arranged to avoid. Raise the
+cadence freely; raise that cap only if the reviewing actually happens.
 
 ## Secrets
 

@@ -14,11 +14,17 @@ name: background maintenance
 
 on:
   schedule:
-    # Monday and Thursday, 06:17 UTC. Twice a week, not daily: the Google AI Pro
-    # Jules allowance is 100 tasks per rolling 24h and there is no reason to
-    # spend it on repositories that have nothing wrong with them. The odd minute
-    # avoids the top-of-hour queue where GitHub delays scheduled runs most.
-    - cron: '17 6 * * 1,4'
+    # Daily, 06:17 UTC, working through up to MAX_REPOS_PER_RUN repositories.
+    # The odd minute avoids the top-of-hour queue where GitHub delays scheduled
+    # runs most.
+    #
+    # Quota was never the binding limit: the Google AI Pro allowance is 100 tasks
+    # per rolling 24h and this spends a handful a week. The binding limit is how
+    # many pull requests a human can actually read, so the brake lives in
+    # triage.py as MAX_OPEN_MAINTENANCE_PRS - above that backlog a run does
+    # nothing at all. The cadence can be generous precisely because the queue
+    # depth is bounded rather than the frequency.
+    - cron: '17 6 * * *'
   workflow_dispatch:
     inputs:
       repo:
@@ -32,12 +38,18 @@ on:
         type: boolean
         default: true
 
-# Least privilege. contents:write exists for exactly one reason - committing
-# maintenance/state.json back so rotation survives across runs (and so this
-# repository keeps enough activity that GitHub does not auto-disable the
-# schedule after 60 idle days). Nothing else in this workflow writes.
+# Least privilege, and both of these are scoped to THIS repository only - the
+# default token cannot write to a target repo, which is why Jules (not this
+# workflow) is what opens a pull request there.
+#   contents: write - commits maintenance/state.json back so rotation survives
+#     across runs, and keeps this repository active enough that GitHub does not
+#     auto-disable the schedule after 60 idle days.
+#   issues: write   - opens the approval queue item when the sensitivity gate
+#     holds a piece of work. Without it a refusal is silent, which is how the
+#     only person who could approve it never learns it exists.
 permissions:
   contents: write
+  issues: write
 
 # One maintenance run at a time, globally. A queued second run would race the
 # state file and could double-delegate the same repository.
@@ -57,11 +69,17 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: Verify the sensitivity gate before trusting it
-        # If the gate that decides what may be delegated is broken, the run stops
-        # here. A maintenance system that cannot prove its own guard rail has no
+      - name: Verify the guard rails before trusting them
+        # If a rule that decides what may be delegated is broken, the run stops
+        # here. A maintenance system that cannot prove its own guard rails has no
         # business creating tasks.
-        run: python3 maintenance/tests/test_gate.py
+        #   test_gate   - what counts as too sensitive to delegate
+        #   test_triage - whose issue text may become an agent brief, and the
+        #                 review-backlog brake that bounds the queue
+        run: |
+          set -euo pipefail
+          python3 maintenance/tests/test_gate.py
+          python3 maintenance/tests/test_triage.py
 
       - name: Triage and delegate
         id: run
