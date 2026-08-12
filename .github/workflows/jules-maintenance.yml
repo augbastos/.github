@@ -1,0 +1,110 @@
+name: background maintenance
+
+# Scheduled secondary maintenance for allowlisted PUBLIC repositories.
+#
+# It picks one repository, looks for one objectively justified piece of work,
+# and hands exactly that to Jules. Finding nothing is a successful run.
+#
+# This repository is the orchestrator. It is public on purpose: Actions minutes
+# are free for public repositories, and nothing here is secret - the only
+# credential is the JULES_API_KEY repository secret, which never reaches a log.
+#
+# Nothing here merges anything. Jules opens a pull request on the target repo
+# and it waits for review.
+
+on:
+  schedule:
+    # Monday and Thursday, 06:17 UTC. Twice a week, not daily: the Google AI Pro
+    # Jules allowance is 100 tasks per rolling 24h and there is no reason to
+    # spend it on repositories that have nothing wrong with them. The odd minute
+    # avoids the top-of-hour queue where GitHub delays scheduled runs most.
+    - cron: '17 6 * * 1,4'
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Force one allowlisted repo (owner/name). Empty = rotation picks.'
+        required: false
+      task:
+        description: 'Manual task text. Empty = normal triage. Still passes every gate.'
+        required: false
+      dry_run:
+        description: 'Triage only, never contact Jules'
+        type: boolean
+        default: true
+
+# Least privilege. contents:write exists for exactly one reason - committing
+# maintenance/state.json back so rotation survives across runs (and so this
+# repository keeps enough activity that GitHub does not auto-disable the
+# schedule after 60 idle days). Nothing else in this workflow writes.
+permissions:
+  contents: write
+
+# One maintenance run at a time, globally. A queued second run would race the
+# state file and could double-delegate the same repository.
+concurrency:
+  group: background-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout orchestrator
+        # Pinned by SHA: a moving tag on a third-party action is a supply-chain
+        # hole even when the publisher is trustworthy. This is actions/checkout v4.2.2.
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+
+      - name: Verify the sensitivity gate before trusting it
+        # If the gate that decides what may be delegated is broken, the run stops
+        # here. A maintenance system that cannot prove its own guard rail has no
+        # business creating tasks.
+        run: python3 maintenance/tests/test_gate.py
+
+      - name: Triage and delegate
+        id: run
+        env:
+          # Default token. Only ever used to READ public repositories and to push
+          # the state file back here - never to write to a target repository.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          MAINTENANCE_RESULT: ${{ github.workspace }}/maintenance-run.json
+          # Every dispatch input reaches the shell through the environment, never
+          # through ${{ }} interpolation inside the script. Interpolated input is
+          # how a workflow turns a text box into arbitrary shell.
+          IN_DRY_RUN: ${{ inputs.dry_run }}
+          IN_REPO: ${{ inputs.repo }}
+          IN_TASK: ${{ inputs.task }}
+        run: |
+          set -euo pipefail
+          args=()
+          # Scheduled runs have no inputs at all; those must be live, not dry.
+          if [ "${IN_DRY_RUN:-false}" = "true" ]; then args+=(--dry-run); fi
+          if [ -n "${IN_REPO:-}" ]; then args+=(--repo "$IN_REPO"); fi
+          if [ -n "${IN_TASK:-}" ]; then args+=(--task "$IN_TASK"); fi
+          python3 maintenance/triage.py "${args[@]}"
+
+      - name: Publish run record
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: maintenance-run
+          path: maintenance-run.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Persist rotation state
+        if: always()
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- maintenance/state.json; then
+            echo "state unchanged"
+            exit 0
+          fi
+          git config user.name  "background-maintenance"
+          git config user.email "background-maintenance@users.noreply.github.com"
+          git add maintenance/state.json
+          git commit -m "chore(maintenance): record run $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

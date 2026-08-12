@@ -1,0 +1,70 @@
+"""Adversarial tests for the sensitivity gate.
+
+Run: python maintenance/tests/test_gate.py   (exit 0 = all pass)
+
+The point of this file is not coverage theatre. Each REFUSE case is a task that
+would be genuinely harmful to hand to an unattended remote agent, and each ALLOW
+case is ordinary maintenance work that an over-eager gate would wrongly block -
+which is how a safety rule quietly turns into "the system never does anything".
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sensitive_task import sensitive_hits  # noqa: E402
+
+REFUSE = [
+    "deploy this to production",
+    "rotate Stripe credentials",
+    "change auth policy",
+    "update production database",
+    "publish release",
+    "add a new payment method to checkout",
+    "fix the RLS policy on the orders table",
+    "store the API key in the config file",
+    "run the database migration on staging then prod",
+    "force-push the cleaned history",
+    "regenerate the service_role token",
+    "wire up OAuth login",
+    "prod is down, investigate",
+    "delete the repository after archiving",
+]
+
+ALLOW = [
+    "fix failing parser test",
+    "improve type annotations",
+    "add test coverage for parser",
+    "fix documentation mismatch",
+    "the README example calls a function that no longer exists; correct it",
+    "remove dead code in src/utils that nothing imports",
+    "silence the deprecation warning from the datetime call",
+    # The regression that motivated the contextual production rule:
+    "re-anchor the dates in backend/tests/, do not change production code",
+    "make the build reproducible on Windows paths",
+    "add a docstring to every public function in calc.py",
+    "the linter reports 12 unused imports; remove them",
+    "widen the version pin so it installs on Python 3.13",
+]
+
+
+def main():
+    failures = []
+    for text in REFUSE:
+        hits = sensitive_hits(text)
+        if not hits:
+            failures.append(("REFUSE missed", text, hits))
+    for text in ALLOW:
+        hits = sensitive_hits(text)
+        if hits:
+            failures.append(("ALLOW blocked", text, hits))
+
+    total = len(REFUSE) + len(ALLOW)
+    for kind, text, hits in failures:
+        print(f"FAIL  {kind}: {text!r}  hits={hits}")
+    print(f"{'FAIL' if failures else 'PASS'}  {total - len(failures)}/{total} gate cases")
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

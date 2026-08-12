@@ -1,0 +1,90 @@
+{
+  "_comment": [
+    "Explicit allowlist for background maintenance. Being public is not consent;",
+    "a repository is maintained only if it appears here with enabled=true.",
+    "Order of work is least-recently-maintained first, priority as tiebreak.",
+    "Only Augusto flips enabled. Automation never adds a repository to this file."
+  ],
+  "schema_version": 1,
+  "repos": [
+    {
+      "repo": "augbastos/wavr",
+      "enabled": true,
+      "priority": 1,
+      "default_branch": "master",
+      "why": "Public AGPL product with a large test suite - the repo where maintenance work pays off most."
+    },
+    {
+      "repo": "augbastos/scpe",
+      "enabled": true,
+      "priority": 2,
+      "default_branch": "main",
+      "why": "Published protocol + PyPI package; regressions there reach installs."
+    },
+    {
+      "repo": "augbastos/devcard",
+      "enabled": true,
+      "priority": 3,
+      "default_branch": "master",
+      "why": "Live Cloudflare Worker, MIT. Maintenance only - deploy stays with Claude."
+    },
+    {
+      "repo": "augbastos/rag-demo",
+      "enabled": true,
+      "priority": 4,
+      "default_branch": "main",
+      "why": "Public portfolio demo. Recruiters read it, so drift is expensive."
+    },
+    {
+      "repo": "augbastos/scrcpy-tray",
+      "enabled": true,
+      "priority": 5,
+      "default_branch": "main",
+      "why": "Small public MIT tool - low blast radius, good first target."
+    },
+    {
+      "repo": "augbastos/deputy-mcp",
+      "enabled": true,
+      "priority": 6,
+      "default_branch": "main",
+      "why": "Published MCP server; keeping it current is real maintenance."
+    },
+
+    {
+      "repo": "augbastos/etica",
+      "enabled": false,
+      "priority": 90,
+      "why": "DISABLED: book content sold on KDP. An agent editing prose is a hard veto, not a judgement call."
+    },
+    {
+      "repo": "augbastos/pitchpilot-case-study",
+      "enabled": false,
+      "priority": 91,
+      "why": "DISABLED: public marketing copy written in Augusto's voice. False claims from here have already reached employers once."
+    },
+    {
+      "repo": "augbastos/lucky-cat-case-study",
+      "enabled": false,
+      "priority": 92,
+      "why": "DISABLED: same reason, plus the Lucky Cat truth-lock (it was never used in production and no text may imply otherwise)."
+    },
+    {
+      "repo": "augbastos/augbastos",
+      "enabled": false,
+      "priority": 93,
+      "why": "DISABLED: profile README, not code."
+    },
+    {
+      "repo": "augbastos/scpe-demo",
+      "enabled": false,
+      "priority": 94,
+      "why": "DISABLED pending a call from Augusto: demo repo, unclear whether it is maintained or disposable."
+    },
+    {
+      "repo": "augbastos/.github",
+      "enabled": false,
+      "priority": 99,
+      "why": "DISABLED permanently: this is the orchestrator. It never maintains itself."
+    }
+  ]
+}
