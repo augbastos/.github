@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "repos": {
+    "augbastos/wavr": {
+      "last_run": "2026-08-12T01:54:40.417599+00:00",
+      "last_outcome": "skipped_busy"
+    }
+  },
+  "history": [
+    {
+      "ts": "2026-08-12T01:54:40.417615+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 5738273773848449738 (IN_PROGRESS)"
+    }
+  ]
+}
