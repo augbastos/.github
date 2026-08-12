@@ -75,6 +75,19 @@ SENSITIVE_PATTERNS = [
     # schema surgery
     (r"\bdb migration\b", "db_migration"),
     (r"\bdatabase migration\b", "db_migration"),
+    # the last line of defence. A broken deploy is rolled back; a broken backup
+    # is discovered on the day it is needed and cannot be undone, so this is not
+    # unattended work no matter how much it looks like ordinary CI. The noun is
+    # bare, like deploy and release; the verb form is required to name real data
+    # so that "back up the old fixture before rewriting it" stays ordinary work.
+    (r"\bbackups?\b", "backup_restore"),
+    (r"\bback\s+up\s+(?:the\s+)?(?:database|db|data|volume|bucket|storage)\b",
+     "backup_restore"),
+    (r"\bdisaster[-\s]?recovery\b", "backup_restore"),
+    (r"\bpg_?(?:dump|restore)\b", "backup_restore"),
+    (r"\brestor(?:e|ing|ation)\s+(?:the\s+)?(?:backup|database|db|dump|snapshot|data)\b",
+     "backup_restore"),
+    (r"\b(?:database|db|data|snapshot|dump)\s+restor(?:e|ation)\b", "backup_restore"),
     # destructive repository operations - background work never does these
     (r"\bforce[- ]push\b", "destructive_repo"),
     (r"\bgit\s+push\s+--force\b", "destructive_repo"),

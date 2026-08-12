@@ -29,6 +29,15 @@ REFUSE = [
     "wire up OAuth login",
     "prod is down, investigate",
     "delete the repository after archiving",
+    # Data safety. The daily backup workflow failing is exactly the shape of task
+    # this loop finds first - failing CI, on the default branch, looking like
+    # ordinary config work. It is not: a backup nobody notices is broken is the
+    # one failure that cannot be repaired after the fact.
+    "the daily backup workflow is failing on master, fix it",
+    "restore the database from last night's dump",
+    "wire pg_restore into the smoke test",
+    "write the disaster recovery runbook",
+    "back up the database before the schema change",
 ]
 
 ALLOW = [
@@ -45,6 +54,11 @@ ALLOW = [
     "add a docstring to every public function in calc.py",
     "the linter reports 12 unused imports; remove them",
     "widen the version pin so it installs on Python 3.13",
+    # "back up" as ordinary caution about a file is not data-safety work. Without
+    # this case the backup rule would creep into blocking any brief that tells a
+    # worker to be careful.
+    "back up the old fixture file before rewriting it",
+    "restore the original indentation in the block you moved",
 ]
 
 
