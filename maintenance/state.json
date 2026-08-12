@@ -8,6 +8,18 @@
     "augbastos/scpe": {
       "last_run": "2026-08-12T01:55:17.209377+00:00",
       "last_outcome": "skipped_no_work"
+    },
+    "augbastos/devcard": {
+      "last_run": "2026-08-12T13:16:27.242238+00:00",
+      "last_outcome": "skipped_no_work"
+    },
+    "augbastos/rag-demo": {
+      "last_run": "2026-08-12T13:16:29.040211+00:00",
+      "last_outcome": "skipped_no_work"
+    },
+    "augbastos/scrcpy-tray": {
+      "last_run": "2026-08-12T13:16:30.730730+00:00",
+      "last_outcome": "skipped_no_work"
     }
   },
   "history": [
@@ -20,6 +32,24 @@
     {
       "ts": "2026-08-12T01:55:17.209397+00:00",
       "repo": "augbastos/scpe",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-12T13:16:27.242253+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-12T13:16:29.040227+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-12T13:16:30.730748+00:00",
+      "repo": "augbastos/scrcpy-tray",
       "outcome": "skipped_no_work",
       "detail": "no failing CI and no actionable open issue"
     }
