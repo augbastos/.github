@@ -509,6 +509,26 @@ check("a nested action resolves through its repository", kind, "action_pin")
 check("and keeps its subdirectory in the task",
       "github/codeql-action/init" in title, True)
 
+# A reusable workflow is not an action, though `uses:` accepts both. The first
+# live run of this source proposed pinning
+# `augbastos/.github/.github/workflows/scpe-seal-reusable.yml`, which would have
+# frozen every caller of a workflow that exists precisely so one fix reaches all
+# of them.
+stub_github(listing=WORKFLOW_LISTING,
+            files={".github/workflows/ci.yml":
+                   "    uses: augbastos/.github/.github/workflows/seal.yml@main\n"},
+            commits={"augbastos/.github@main": {"sha": NEW_SHA}})
+check("a reusable workflow call is not treated as an action",
+      triage.find_work(REPO, "t")[0], None)
+
+# ...but a real action living under a subdirectory still is one.
+stub_github(listing=WORKFLOW_LISTING,
+            files={".github/workflows/ci.yml":
+                   "      - uses: github/codeql-action/analyze@v3\n"},
+            commits={"github/codeql-action@v3": {"sha": NEW_SHA}})
+check("a subdirectory action is still an action",
+      triage.find_work(REPO, "t")[0], "action_pin")
+
 stub_github(listing=WORKFLOW_LISTING, files={".github/workflows/ci.yml": UNPINNED},
             commits={"actions/checkout@v4": {"sha": OLD_SHA}})
 _pin_fp = triage.work_fingerprint(REPO["repo"], "action_pin",

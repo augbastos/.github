@@ -713,6 +713,16 @@ def find_action_pin_work(repo, token, done):
             used = f"{action}{subpath}"
             if used in seen or checked >= MAX_ACTIONS_CHECKED:
                 continue
+            # A REUSABLE WORKFLOW is not an action, even though `uses:` takes
+            # both. Caught by the first live run of this source, which proposed
+            # pinning `augbastos/.github/.github/workflows/scpe-seal-reusable.yml`
+            # - and that would have been actively wrong. A reusable workflow
+            # exists so a fix lands in one place and every caller gets it; sha-
+            # pinning the callers deletes that property and turns one edit into
+            # N. The supply-chain argument does not carry over either: this one
+            # lives in the repository that runs the maintenance loop itself.
+            if subpath.endswith((".yml", ".yaml")):
+                continue
             seen.add(used)
             checked += 1
 
