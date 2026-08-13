@@ -162,16 +162,34 @@ def save_repos(repos):
 
 
 def is_private(repo):
-    return (repo.get("visibility") or "public").lower() == "private"
+    """Unknown visibility counts as private.
+
+    Not symmetry - fail-closed. The two ways to be wrong are not equal: guessing
+    'public' for a private repository sends it through triage to collect 404s,
+    which `find_work` reports as "cannot read workflow runs" and is exactly the
+    illegible failure this feature set out to delete. Guessing 'private' for a
+    public one costs it a run and says so, by name, in the summary. Take the
+    failure that explains itself.
+    """
+    return (repo.get("visibility") or "private").lower() == "private"
 
 
 def scope_profile(repo):
-    """Never trust the file blindly: an unknown profile is the narrow one.
+    """Never trust the file blindly: anything that is not an explicit, known
+    profile is the narrow one.
 
     A typo in repos.json must not silently widen what an unattended agent may
     touch, and 'full' is the wide setting. Unknown -> maintenance_lite.
+
+    ABSENT counts as unknown, and that is the whole point of this line. The first
+    version defaulted a MISSING key to 'full', which covered the typo but not the
+    likelier human error: adding a repository by hand and forgetting the field.
+    Widening is a decision, so it has to be written down - 'full' is now reachable
+    only by typing it. Costs nothing today (every enabled entry states its
+    profile) and stops the trap the moment someone adds the next Lucky Cat
+    service in a hurry, which this very feature invites them to do.
     """
-    profile = (repo.get("scope_profile") or "full").lower()
+    profile = (repo.get("scope_profile") or "").lower()
     return profile if profile in SCOPE_PROFILES else FAMILY_SCOPE_PROFILE
 
 

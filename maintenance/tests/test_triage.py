@@ -236,11 +236,27 @@ LITE = {"repo": "augbastos/lucky-cat", "default_branch": "master",
         "visibility": "private", "scope_profile": "maintenance_lite",
         "forbidden_paths": ["site/seocoxinha/**"]}
 
-check("a missing profile stays wide (existing repos keep their behaviour)",
-      triage.scope_profile({"repo": "x"}), "full")
+# These four fix the same rule from four sides: WIDENING IS TYPED, never
+# inherited. The earlier version of this file asserted the opposite for the two
+# absent cases - a missing profile stayed 'full' and a missing visibility read as
+# public. Both covered the typo and missed the likelier mistake, which is adding
+# a repository by hand and leaving a field out; and this feature exists precisely
+# to invite new Lucky Cat repositories in.
 check("a typo narrows instead of widening",
       triage.scope_profile({"repo": "x", "scope_profile": "ful"}), "maintenance_lite")
-check("visibility defaults to public", triage.is_private({"repo": "x"}), False)
+check("an ABSENT profile narrows too - 'full' has to be typed",
+      triage.scope_profile({"repo": "x"}), "maintenance_lite")
+check("an empty profile is not a wide profile",
+      triage.scope_profile({"repo": "x", "scope_profile": ""}), "maintenance_lite")
+check("full still works when it is actually stated",
+      triage.scope_profile({"repo": "x", "scope_profile": "full"}), "full")
+# Unknown visibility is private: a public repo guessed private loses one run and
+# is named in the summary; a private repo guessed public collects 404s that
+# `find_work` reports as "cannot read workflow runs" - the illegible failure this
+# whole change set out to delete.
+check("unknown visibility counts as private", triage.is_private({"repo": "x"}), True)
+check("public is read from the entry",
+      triage.is_private({"repo": "x", "visibility": "public"}), False)
 check("private is read from the entry", triage.is_private(LITE), True)
 
 lite_brief = triage.build_brief(LITE, "ci_failure", "Fix the failing tests workflow", "run #1 failed")
@@ -251,7 +267,11 @@ check("the narrow brief lists the frozen path",
 check("every brief asks for a jules/ branch",
       "`jules/<short-slug>`" in lite_brief, True)
 
-full_brief = triage.build_brief(REPO, "ci_failure", "Fix it", "run #1 failed")
+# The wide fixture has to SAY it is wide. It used to inherit 'full' from a
+# missing key, which is the very inheritance this rule removed - a fixture that
+# leans on an implicit default stops testing the thing it names.
+WIDE = dict(REPO, scope_profile="full")
+full_brief = triage.build_brief(WIDE, "ci_failure", "Fix it", "run #1 failed")
 check("the wide brief carries no narrow block",
       "ALLOWED WORK" in full_brief, False)
 check("the wide brief carries no frozen paths",
@@ -261,7 +281,10 @@ check("the wide brief carries no frozen paths",
 # --------------------------------------------------------------------------
 print("\n=== private repositories need their own read token ===")
 
-MIXED = [{"repo": "pub", "enabled": True},
+# 'pub' states its visibility for the same reason WIDE states its profile: since
+# unknown now counts as private, a fixture that omits the field would be dropped
+# and this case would pass for the wrong reason.
+MIXED = [{"repo": "pub", "enabled": True, "visibility": "public"},
          {"repo": "priv", "enabled": True, "visibility": "private"},
          {"repo": "priv-off", "enabled": False, "visibility": "private"}]
 
