@@ -18,9 +18,9 @@ on:
     # MAX_REPOS_PER_RUN repositories. The odd minute avoids the top-of-hour queue
     # where GitHub delays scheduled runs most.
     #
-    # 2 runs x 4 repos = 8 repository-visits a day, which is the size of the
-    # enabled allowlist: every repository is looked at daily, and the two runs
-    # sit roughly twelve hours apart so a batch delegated in the morning has a
+    # 2 runs x 6 repos = 12 repository-visits a day, one more than the enabled
+    # allowlist: every repository is looked at daily, and the two runs sit
+    # roughly twelve hours apart so a batch delegated in the morning has a
     # working day to be reviewed before the evening run looks again.
     #
     # Quota was never the binding limit: the Google AI Pro allowance is 100 tasks

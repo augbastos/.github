@@ -73,12 +73,16 @@ JULES_LIVE_STATES = {"IN_PROGRESS", "PENDING", "QUEUED", "PLANNING",
                      "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED"}
 
 # How many repositories one run may work through. Paired with the twice-daily
-# schedule this is deliberate arithmetic, not a round number: 4 per run x 2 runs
-# = 8 repository-visits a day, which is exactly the size of the enabled
-# allowlist. Every repository gets looked at every day, and no single run has to
-# walk the whole list (a long run is a run that can be cut off mid-way by the
-# job timeout, and the rotation state it never wrote is the part that is lost).
-MAX_REPOS_PER_RUN = 4
+# schedule this is deliberate arithmetic, not a round number: 6 per run x 2 runs
+# = 12 repository-visits a day, one more than the 11 currently enabled. Every
+# repository gets looked at every day, and no single run has to walk the whole
+# list (a long run is a run that can be cut off mid-way by the job timeout, and
+# the rotation state it never wrote is the part that is lost).
+#
+# Keep this at ceil(enabled / 2) when the allowlist grows, or repositories at
+# the tail of the rotation quietly stop being visited daily - the kind of drift
+# that is invisible because nothing fails, it just never happens.
+MAX_REPOS_PER_RUN = 6
 
 # Global brake. `already_busy` caps each repo at one open maintenance PR, which
 # bounds nothing across eight repos running twice a day. Review capacity is the

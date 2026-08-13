@@ -99,6 +99,34 @@
     },
 
     {
+      "repo": "augbastos/aos",
+      "enabled": true,
+      "priority": 9,
+      "default_branch": "master",
+      "visibility": "private",
+      "scope_profile": "maintenance_lite",
+      "why": "Added 2026-08-13 at Augusto's request, to give the loop more surface than the six public repos. Narrow profile because nobody has examined this tree against the maintenance rules yet - 'full' has to be earned by a look, not assumed. No CI at all today, so building one is the obvious first thing here."
+    },
+    {
+      "repo": "augbastos/council",
+      "enabled": true,
+      "priority": 10,
+      "default_branch": "master",
+      "visibility": "private",
+      "scope_profile": "maintenance_lite",
+      "why": "Added 2026-08-13 with aos and synergy. Has one workflow (eval.yml) and no test job. Same reasoning on the narrow profile: unexamined tree, so tests/CI/docs only until it is looked at."
+    },
+    {
+      "repo": "augbastos/synergy",
+      "enabled": true,
+      "priority": 11,
+      "default_branch": "master",
+      "visibility": "private",
+      "scope_profile": "maintenance_lite",
+      "why": "Added 2026-08-13 with aos and council. No CI at all. Narrow profile for the same reason as those two: an unexamined tree gets tests, CI and docs only."
+    },
+
+    {
       "repo": "augbastos/etica",
       "enabled": false,
       "priority": 90,
