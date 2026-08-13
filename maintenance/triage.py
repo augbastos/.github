@@ -15,6 +15,17 @@ Design rules, in priority order:
      sensitivity - stops before Jules is called, never after.
   3. EVIDENCE BEFORE WORK. Every brief cites what made it necessary: a failing
      run, an issue number, a warning. No evidence, no task.
+  3b. REACTIVE SOURCES ALONE STARVE THE LOOP. Failing CI and open issues are the
+     only two signals that arrive on their own, and a healthy repository emits
+     neither. Every triage run recorded so far ended in "no failing CI and no
+     actionable open issue" on five of the six repositories it reached, because
+     the CI was green and the owner does not file issues against himself - and a
+     later count found zero open issues across the whole allowlist. So the loop
+     was quiet for the one reason nobody wants it quiet: everything was fine,
+     and being fine is not something it knows how to work on. The proactive
+     sources below (MAINTENANCE.md backlog, stale action pins) exist to give the
+     loop something objectively justified to do when nothing is broken. They are
+     still evidence-backed; they simply do not wait for a failure.
   4. ONE PER REPOSITORY, AND A BOUNDED QUEUE. Never a second task while one is
      live for the same repository, and nothing new at all once the review
      backlog reaches MAX_OPEN_MAINTENANCE_PRS. Review capacity is the scarce
@@ -35,6 +46,8 @@ whether to do nothing.
 """
 
 import argparse
+import base64
+import hashlib
 import json
 import os
 import re
@@ -59,17 +72,31 @@ BRANCH_PREFIX = "jules"
 JULES_LIVE_STATES = {"IN_PROGRESS", "PENDING", "QUEUED", "PLANNING",
                      "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED"}
 
-# How many repositories one run may work through. The loop went daily, so a
-# single repo per run would take a week and a half to touch the allowlist once.
-MAX_REPOS_PER_RUN = 3
+# How many repositories one run may work through. Paired with the twice-daily
+# schedule this is deliberate arithmetic, not a round number: 4 per run x 2 runs
+# = 8 repository-visits a day, which is exactly the size of the enabled
+# allowlist. Every repository gets looked at every day, and no single run has to
+# walk the whole list (a long run is a run that can be cut off mid-way by the
+# job timeout, and the rotation state it never wrote is the part that is lost).
+MAX_REPOS_PER_RUN = 4
 
 # Global brake. `already_busy` caps each repo at one open maintenance PR, which
-# bounds nothing across six repos running daily. Review capacity is the real
-# scarce resource here, not Jules quota (100 tasks/24h, we use a handful a
+# bounds nothing across eight repos running twice a day. Review capacity is the
+# real scarce resource here, not Jules quota (100 tasks/24h, we use a handful a
 # week): a queue nobody can read gets rubber-stamped, and rubber-stamping is
 # how an unreviewed agent patch reaches master. Above this many open
 # maintenance PRs the run does nothing at all until the backlog is cleared.
-MAX_OPEN_MAINTENANCE_PRS = 5
+#
+# Raised 5 -> 8 on 2026-08-13, deliberately and with the trade-off understood.
+# The first scheduled run in the loop's life delegated nothing: seven Jules pull
+# requests were open on wavr, the cap was five, and the run stopped before
+# triaging anything. That is the brake working as designed - but a cap that a
+# single repository's batch can exceed on its own stops being a brake on the
+# queue and becomes a stop on the loop. Eight leaves room for one repository to
+# hold a small batch while the rotation still reaches the others. It is still a
+# hard stop, and it is still the number to lower first if the queue ever
+# outruns the reading.
+MAX_OPEN_MAINTENANCE_PRS = 8
 
 # Where held work is parked for a human decision. This repository is the
 # orchestrator, so the queue lives with the thing that produced it.
@@ -82,6 +109,68 @@ AMBER_LABEL = "needs-augusto"
 # text would be agent instructions. Only people who already have write-level
 # trust on the repository qualify. GitHub returns this as `author_association`.
 TRUSTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
+
+# PROACTIVE SOURCE 1 - a maintenance backlog the owner writes into the repository
+# itself. This exists because the trusted-issue source has a practical hole: the
+# rule is right (only write-level trust may become a brief) but Augusto does not
+# open issues on his own repositories, so in practice the source is always empty
+# and the loop starves on repositories that are simply healthy.
+#
+# A file in the repository carries exactly the same trust as a trusted issue, and
+# arguably more: changing it requires a commit, which requires write access, and
+# the change is reviewable in history. It is NOT a second inbox from the
+# internet - a fork's copy is never read, only the default branch of the repo
+# itself.
+BACKLOG_FILES = (".github/MAINTENANCE.md", "MAINTENANCE.md")
+BACKLOG_ITEM_RE = re.compile(r"^\s*[-*]\s+\[ \]\s+(.+?)\s*$")
+# A backlog line becomes the title and the brief of an autonomous task. A very
+# long line is either an essay (not a scoped task) or an attempt to smuggle a
+# wall of instructions through; either way it is not what this source is for.
+MAX_BACKLOG_ITEM_CHARS = 300
+
+# PROACTIVE SOURCE 2 - action reference hygiene, in two flavours:
+#
+#   UNPINNED  `uses: actions/checkout@v4` - a moving ref. Whoever publishes that
+#             action can change what runs in this repository's CI at any moment,
+#             with no review and no notification. This workflow file pins its own
+#             actions by sha for exactly that reason, and says so in a comment;
+#             a survey on 2026-08-13 found that discipline applied in this
+#             repository and in NO other - all thirteen distinct action
+#             references across the maintained repositories were moving tags,
+#             including one branch-like `@stable`. The fix is mechanical and
+#             behaviour-preserving: pin to the sha the ref resolves to TODAY, so
+#             nothing changes version, only the guarantee that it cannot change
+#             underneath the repository.
+#   STALE     `uses: actions/checkout@<sha>` behind the publisher's latest
+#             release. Once a repository is pinned this is what accumulates, so
+#             the source stays useful after the first sweep instead of going
+#             quiet again.
+#
+# Both are verifiable entirely from the API - the ref in the file, and the sha it
+# or the latest release tag resolves to. Nothing is inferred. This is the work
+# Dependabot would do if it were available: it is not, Dependabot alerts answer
+# 403 (disabled) and code scanning answers 404 (no analysis) on these
+# repositories, which is why this source reads the workflow files directly.
+#
+# Group 1 is owner/repo (what the API is asked about), group 2 the optional
+# subdirectory of a nested action (github/codeql-action/init), group 3 the ref.
+ACTION_REF_RE = re.compile(
+    r"uses:\s*([A-Za-z0-9][\w.-]*/[\w.-]+)((?:/[\w.-]+)*)@([^\s#'\"]+)")
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+WORKFLOW_DIR = ".github/workflows"
+# Bounds on how much of a repository one triage pass will read looking for pins.
+# Without them a repository with fifty workflows turns a "decide whether to do
+# anything" run into a hundred API calls against someone else's rate limit.
+MAX_WORKFLOW_FILES = 12
+MAX_ACTIONS_CHECKED = 15
+
+# Work kinds that do not go away on their own, and therefore need a memory.
+# A failing build stops failing and a closed issue stops being open - the world
+# forgets those for us. A line in MAINTENANCE.md and a stale pin stay exactly as
+# they are until a pull request lands, so without a record of what has already
+# been offered, a proposal Augusto declined would be re-delegated on every
+# rotation forever. That is how a maintenance loop becomes a nuisance.
+PROACTIVE_KINDS = {"backlog", "action_pin"}
 
 # Repositories that carry this GitHub topic are the Lucky Cat product family and
 # join the rotation on their own, enabled, as soon as they exist. That is a
@@ -304,6 +393,54 @@ def gh_paged(path, token, limit=30):
     return data[:limit] if isinstance(data, list) else data
 
 
+def gh_file(owner_repo, path, token, ref=None):
+    """Read one text file from a repository. None means 'not usable', never ''.
+
+    Kept separate from gh_paged for two reasons. The contents API answers with an
+    object rather than a list, and - more importantly - a 404 here is ordinary
+    information ("this repository has no MAINTENANCE.md"), not the failure that
+    gh_paged's None is meant to signal. Callers must therefore treat None as
+    "nothing to read", and must not mistake it for "the repository is
+    unreachable"; the reachability question is already answered earlier by
+    find_work's workflow-runs call, which fails closed on its own.
+    """
+    url = f"{GITHUB_API}/repos/{owner_repo}/contents/{urllib.parse.quote(path)}"
+    if ref:
+        url += f"?ref={urllib.parse.quote(ref)}"
+    data, status = http_json(url, token=token)
+    if status != 200 or not isinstance(data, dict):
+        return None
+    # A directory answers as a list, and an oversized blob answers with an empty
+    # `content` and a download_url instead. Neither is a file we can read here.
+    if data.get("encoding") != "base64" or not data.get("content"):
+        return None
+    try:
+        return base64.b64decode(data["content"]).decode("utf-8", "replace")
+    except (ValueError, TypeError):
+        return None
+
+
+def work_fingerprint(owner_repo, kind, title):
+    """Stable identity for one piece of proactive work - see PROACTIVE_KINDS.
+
+    Derived from the title rather than carried alongside it on purpose: the title
+    is what already encodes the specific item (the backlog line, the action and
+    the release it should move to), so there is exactly one thing to keep stable
+    and no second value to forget to thread through a call.
+
+    Whitespace is normalised so that reflowing a line in MAINTENANCE.md does not
+    read as a brand-new task. Editing the actual words does - which is the
+    documented way to re-offer something that was declined.
+    """
+    raw = f"{owner_repo}|{kind}|{' '.join((title or '').split())}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def done_work_keys(state):
+    """Fingerprints of proactive work already handed to Jules at least once."""
+    return frozenset((state.get("done_work") or {}).keys())
+
+
 def is_maintenance_pr(pr, jules_prs=frozenset()):
     """Does this open pull request come from the maintenance loop?
 
@@ -492,11 +629,145 @@ Close this issue. Nothing else references it.
     return data.get("number"), None
 
 
-def find_work(repo, token):
+def find_backlog_work(repo, token, done):
+    """First unchecked line of the repository's own MAINTENANCE.md, or None.
+
+    Read from the DEFAULT BRANCH only. That is the whole trust argument: putting
+    a line there took a commit to the branch, which took write access. A pull
+    request's copy, a fork's copy and any other ref are never consulted, so an
+    outside contributor cannot open a PR that adds a task and have it executed
+    before anyone merges it.
+    """
+    owner_repo = repo["repo"]
+    branch = repo.get("default_branch") or "main"
+    for path in BACKLOG_FILES:
+        text = gh_file(owner_repo, path, token, branch)
+        if text is None:
+            continue
+        for line in text.splitlines():
+            m = BACKLOG_ITEM_RE.match(line)
+            if not m:
+                continue
+            item = " ".join(m.group(1).split())
+            if not item or len(item) > MAX_BACKLOG_ITEM_CHARS:
+                continue
+            title = f"Backlog item: {item}"
+            if work_fingerprint(owner_repo, "backlog", title) in done:
+                continue
+            return ("backlog", title[:200],
+                    f"unchecked item in {path} on the {branch} branch of "
+                    f"{owner_repo}:\n\n- [ ] {item}\n\n"
+                    f"That file is part of the repository, so this line was put "
+                    f"there by a commit from somebody with write access.")
+        # The file existed and had nothing left to do. Checking the second
+        # candidate path would only find a stale duplicate, so stop here.
+        return None
+    return None
+
+
+def _resolve_ref(action, ref, token):
+    """The 40-char commit sha a tag/branch of `action` points at, or None.
+
+    None means "could not be established", and every caller treats that as a
+    reason to skip the action entirely. An action reference that cannot be
+    resolved must never become a proposed edit: a pin to a sha nobody verified
+    is indistinguishable, in a review queue, from a pin to the right one.
+    """
+    commit = gh_paged(f"/repos/{action}/commits/{urllib.parse.quote(ref)}", token)
+    sha = (commit or {}).get("sha") if isinstance(commit, dict) else None
+    return sha if sha and SHA_RE.match(sha) else None
+
+
+def find_action_pin_work(repo, token, done):
+    """An action reference that is unpinned, or pinned behind its latest release.
+
+    Evidence, not opinion: the reference is read out of the workflow file, and
+    the sha it is compared against comes from resolving a real ref through the
+    API. When either side cannot be established the action is skipped rather
+    than guessed at.
+
+    The unpinned case deliberately proposes the sha of the ref ALREADY IN USE,
+    not the newest release. Pinning and upgrading are two different changes and
+    mixing them produces a pull request that is both a security improvement and
+    a version bump, which is the kind nobody can review confidently. Pin first,
+    at today's behaviour; the stale-pin branch below handles upgrades later, on
+    its own, with its own evidence.
+    """
+    owner_repo = repo["repo"]
+    branch = repo.get("default_branch") or "main"
+
+    listing = gh_paged(f"/repos/{owner_repo}/contents/{WORKFLOW_DIR}"
+                       f"?ref={urllib.parse.quote(branch)}", token)
+    if not isinstance(listing, list):
+        return None  # no workflows directory, or unreadable - not our problem here
+
+    checked, seen = 0, set()
+    for entry in listing[:MAX_WORKFLOW_FILES]:
+        name = entry.get("name") or ""
+        if entry.get("type") != "file" or not name.endswith((".yml", ".yaml")):
+            continue
+        text = gh_file(owner_repo, f"{WORKFLOW_DIR}/{name}", token, branch)
+        if not text:
+            continue
+        for action, subpath, ref in ACTION_REF_RE.findall(text):
+            used = f"{action}{subpath}"
+            if used in seen or checked >= MAX_ACTIONS_CHECKED:
+                continue
+            seen.add(used)
+            checked += 1
+
+            if not SHA_RE.match(ref):
+                # UNPINNED. Resolve the ref currently in use; that sha is the
+                # whole proposal, so a failure to resolve it is a skip.
+                target = _resolve_ref(action, ref, token)
+                if not target:
+                    continue
+                title = f"Pin the {used} action to a commit sha"
+                if work_fingerprint(owner_repo, "action_pin", title) in done:
+                    continue
+                return ("action_pin", title[:200],
+                        f"{WORKFLOW_DIR}/{name} on the {branch} branch of "
+                        f"{owner_repo} uses `{used}@{ref}`.\n"
+                        f"`{ref}` is a moving reference: whoever publishes "
+                        f"{action} can change what it runs at any time, without "
+                        f"a commit to this repository and without review.\n"
+                        f"Today it resolves to commit `{target}` - pinning to "
+                        f"that sha keeps the current behaviour exactly and "
+                        f"removes the ability to change it silently.")
+
+            # STALE PIN. Compare against the publisher's latest release.
+            release = gh_paged(f"/repos/{action}/releases/latest", token)
+            tag = (release or {}).get("tag_name") if isinstance(release, dict) else None
+            if not tag:
+                continue  # no releases - nothing to compare against
+            target = _resolve_ref(action, tag, token)
+            if not target or target == ref:
+                continue  # unresolvable, or already on the latest release
+
+            title = f"Update the pinned {used} action to {tag}"
+            if work_fingerprint(owner_repo, "action_pin", title) in done:
+                continue
+            return ("action_pin", title[:200],
+                    f"{WORKFLOW_DIR}/{name} on the {branch} branch of "
+                    f"{owner_repo} pins `{used}` at `{ref}`.\n"
+                    f"The publisher's latest release is `{tag}`, which resolves "
+                    f"to commit `{target}`.\n"
+                    f"The pin is therefore behind by at least one release.")
+    return None
+
+
+def find_work(repo, token, done=frozenset()):
     """Return (kind, title, evidence) for the highest-priority justified task.
 
     Priority order mirrors the maintenance policy: broken CI, then open issues,
-    then nothing. Sources that cannot be verified from the API are not guessed at.
+    then the repository's own backlog file, then a stale action pin, then
+    nothing. Sources that cannot be verified from the API are not guessed at.
+
+    The first two are REACTIVE - something already went wrong or somebody already
+    asked. They rank highest because a regression outranks tidiness. The last two
+    are PROACTIVE and exist because the reactive pair is silent on a healthy
+    repository (see design rule 3b); `done` carries the fingerprints of proactive
+    work already offered, so nothing is proposed twice on its own.
     """
     owner_repo = repo["repo"]
     branch = repo.get("default_branch") or "main"
@@ -541,7 +812,21 @@ def find_work(repo, token):
                 f"open issue #{issue['number']} ({issue['html_url']}): "
                 f"{(issue.get('title') or '').strip()}\n\n{body}")
 
-    return None, None, "no failing CI and no actionable open issue"
+    # 3. the repository's own maintenance backlog - the owner's stated work,
+    #    without requiring him to use an issue tracker he does not use.
+    backlog = find_backlog_work(repo, token, done)
+    if backlog:
+        return backlog
+
+    # 4. an unpinned or stale action reference - drift that accumulates
+    #    precisely while nothing is breaking, and the only one of these four
+    #    sources that needs nobody to have written anything down first.
+    pin = find_action_pin_work(repo, token, done)
+    if pin:
+        return pin
+
+    return (None, None, "no failing CI, no actionable open issue, no unchecked "
+                        "backlog item and no unpinned or stale action reference")
 
 
 LITE_SCOPE_BLOCK = """
@@ -561,11 +846,56 @@ If the fix requires any of those, say so and change nothing. A correct refusal i
 a successful run here.
 """
 
+PIN_SCOPE_BLOCK = """
+HOW TO CHANGE AN ACTION REFERENCE - the sha pin is a security control, not clutter
+- Use EXACTLY the 40-character commit sha named in the evidence above. Do not
+  look up a different one, and do not resolve the ref yourself.
+- Leave a comment beside it recording the human-readable version the sha came
+  from, e.g. `uses: actions/checkout@<sha>  # v4`. The comment is how the next
+  reader knows what the sha is without querying the API.
+- NEVER use a tag or a branch as the reference (`@v5`, `@main`, `@stable`). A
+  moving ref hands whoever publishes that action the ability to change what runs
+  in this repository's CI at any time, with no review - which is the entire risk
+  the pin removes. Leaving or introducing a moving ref is a failed task, not a
+  shortcut.
+- When the task is to PIN, the version must not change. The sha given is the one
+  the ref already resolves to, so CI behaviour is identical before and after; if
+  you find yourself upgrading anything, you are doing a different task.
+- Change the ONE action named above, in every workflow file where that exact
+  reference appears. Every other action stays exactly as it is.
+- If the change would alter the action's inputs or behaviour, say so and change
+  nothing: a bump that silently breaks a workflow is worse than a stale pin.
+"""
+
 
 def build_brief(repo, kind, title, evidence):
     """A bounded contract. Never 'improve this repository'."""
     branch = repo.get("default_branch") or "main"
     scope_block = LITE_SCOPE_BLOCK if scope_profile(repo) == "maintenance_lite" else ""
+    # A pin bump has one specific way to go wrong that no general instruction
+    # covers: "update the action" reads as an invitation to use the friendly tag.
+    scope_block += PIN_SCOPE_BLOCK if kind == "action_pin" else ""
+
+    # The default instructions assume a defect: something broke, find why, and
+    # leave behind the test that would have caught it. Two of those lines are
+    # nonsense for the proactive kinds - a moving action ref has no root cause
+    # and no test that would have caught it - and an instruction that cannot be
+    # followed is not harmless: it invites the agent to invent work to satisfy
+    # it, which is exactly the scope creep every other rule here is fighting.
+    if kind == "action_pin":
+        how = ("- Make exactly the edit described above and nothing else.\n"
+               "- Do not add tests: this changes a reference, not behaviour.\n"
+               "- Check that the workflows still parse, and say what you checked.")
+    elif kind == "backlog":
+        how = ("- Do only what the backlog line asks. If it is ambiguous, say so\n"
+               "  and change nothing - there is nobody to ask.\n"
+               "- Implement the smallest correct change. Do not refactor around it.\n"
+               "- Add or update tests when the change is behavioural.\n"
+               "- Tick that line in the backlog file in the same pull request.")
+    else:
+        how = ("- Investigate and confirm the root cause before changing anything.\n"
+               "- Implement the smallest correct fix. Do not refactor around it.\n"
+               "- Add or update the tests that would have caught this.")
 
     forbidden = repo.get("forbidden_paths") or []
     forbidden_block = ""
@@ -582,9 +912,7 @@ WHY THIS TASK EXISTS (evidence)
 {evidence}
 
 WHAT TO DO
-- Investigate and confirm the root cause before changing anything.
-- Implement the smallest correct fix. Do not refactor around it.
-- Add or update the tests that would have caught this.
+{how}
 - Do not change unrelated code, formatting, or dependencies.
 - Base your work on the {branch} branch.
 - Name your branch `{BRANCH_PREFIX}/<short-slug>` so the maintenance loop can
@@ -693,7 +1021,7 @@ def run_one(repo, token, jules_key, args, state, orch_token=None, jules_prs=froz
         kind, title = "manual", args.task.strip().splitlines()[0][:120]
         evidence = f"manual dispatch by the repository owner:\n\n{args.task.strip()}"
     else:
-        kind, title, evidence = find_work(repo, token)
+        kind, title, evidence = find_work(repo, token, done_work_keys(state))
 
     if not kind:
         record.update(status="skipped", triage_result=evidence,
@@ -748,6 +1076,17 @@ def run_one(repo, token, jules_key, args, state, orch_token=None, jules_prs=froz
                   outcome="session created; PR will appear when Jules finishes")
     seen = state.setdefault("repos", {}).setdefault(repo["repo"], {})
     seen["last_session"] = sid
+    if kind in PROACTIVE_KINDS:
+        # Recorded on DELEGATION, not on merge. The loop cannot see whether a
+        # pull request was eventually accepted, and waiting for an outcome it
+        # cannot observe would mean re-proposing the same thing every rotation
+        # while the first proposal is still being decided. The cost is that
+        # declining a proposal retires it silently: to offer it again, edit the
+        # backlog line (any wording change is a new fingerprint) or drop the
+        # entry from `done_work` in state.json.
+        fp = work_fingerprint(repo["repo"], kind, title)
+        state.setdefault("done_work", {})[fp] = {
+            "ts": utc_now(), "repo": repo["repo"], "kind": kind, "title": title}
     stamp("delegated")
     state["history"][-1]["session"] = sid
     state["history"][-1]["task"] = title
@@ -876,7 +1215,18 @@ def main():
         if record.get("status") == "fail_closed":
             exit_code = 1
 
-    save_state(state)
+    # A dry run looks and leaves nothing behind - the same rule the allowlist
+    # write above already followed, applied to rotation state, which it was not.
+    # It matters more than it sounds: `workflow_dispatch` defaults dry_run to
+    # TRUE, so every "just show me what it would do" click was stamping
+    # last_run on the repositories it inspected and appending history entries
+    # for runs that never happened, and the workflow's next step commits that
+    # file. The rotation then skipped those repositories on the real run,
+    # because as far as the state file knew, they had just been visited.
+    if args.dry_run:
+        log("dry run - rotation state NOT written")
+    else:
+        save_state(state)
 
     statuses = [r.get("status") for r in run["repos"]]
     run["status"] = ("delegated" if run["delegated"] else

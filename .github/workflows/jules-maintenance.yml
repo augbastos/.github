@@ -14,17 +14,25 @@ name: background maintenance
 
 on:
   schedule:
-    # Daily, 06:17 UTC, working through up to MAX_REPOS_PER_RUN repositories.
-    # The odd minute avoids the top-of-hour queue where GitHub delays scheduled
-    # runs most.
+    # Twice daily, 06:17 and 18:17 UTC, each run working through up to
+    # MAX_REPOS_PER_RUN repositories. The odd minute avoids the top-of-hour queue
+    # where GitHub delays scheduled runs most.
+    #
+    # 2 runs x 4 repos = 8 repository-visits a day, which is the size of the
+    # enabled allowlist: every repository is looked at daily, and the two runs
+    # sit roughly twelve hours apart so a batch delegated in the morning has a
+    # working day to be reviewed before the evening run looks again.
     #
     # Quota was never the binding limit: the Google AI Pro allowance is 100 tasks
     # per rolling 24h and this spends a handful a week. The binding limit is how
     # many pull requests a human can actually read, so the brake lives in
     # triage.py as MAX_OPEN_MAINTENANCE_PRS - above that backlog a run does
     # nothing at all. The cadence can be generous precisely because the queue
-    # depth is bounded rather than the frequency.
-    - cron: '17 6 * * *'
+    # depth is bounded rather than the frequency. Raising the cadence on its own
+    # changes nothing once that cap is reached: on 2026-08-13 the first scheduled
+    # run in the loop's life delegated zero because seven pull requests were
+    # already open against a cap of five.
+    - cron: '17 6,18 * * *'
   workflow_dispatch:
     inputs:
       repo:
