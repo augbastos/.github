@@ -3,15 +3,28 @@
     "Explicit allowlist for background maintenance. Being public is not consent;",
     "a repository is maintained only if it appears here with enabled=true.",
     "Order of work is least-recently-maintained first, priority as tiebreak.",
-    "Only Augusto flips enabled. Automation never adds a repository to this file."
+    "",
+    "Only Augusto flips enabled on an existing entry. Automation may ADD an entry",
+    "for a repository carrying the 'lucky-cat' topic - every Lucky Cat service is",
+    "maintained from birth - and those arrive on the narrow scope profile. It may",
+    "never rewrite an entry that is already here, so a repository turned off stays",
+    "off.",
+    "",
+    "visibility: 'private' repositories are read with MAINTENANCE_READ_TOKEN and are",
+    "skipped entirely when that secret is absent. scope_profile: 'full' allows any",
+    "non-sensitive work the evidence justifies; 'maintenance_lite' allows only tests,",
+    "CI, docs and strings - for repositories where product logic and money share a",
+    "tree with the tests. forbidden_paths are frozen: never read, written or moved."
   ],
-  "schema_version": 1,
+  "schema_version": 2,
   "repos": [
     {
       "repo": "augbastos/wavr",
       "enabled": true,
       "priority": 1,
       "default_branch": "master",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Public AGPL product with a large test suite - the repo where maintenance work pays off most."
     },
     {
@@ -19,6 +32,8 @@
       "enabled": true,
       "priority": 2,
       "default_branch": "main",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Published protocol + PyPI package; regressions there reach installs."
     },
     {
@@ -26,6 +41,8 @@
       "enabled": true,
       "priority": 3,
       "default_branch": "master",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Live Cloudflare Worker, MIT. Maintenance only - deploy stays with Claude."
     },
     {
@@ -33,6 +50,8 @@
       "enabled": true,
       "priority": 4,
       "default_branch": "main",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Public portfolio demo. Recruiters read it, so drift is expensive."
     },
     {
@@ -40,6 +59,8 @@
       "enabled": true,
       "priority": 5,
       "default_branch": "main",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Small public MIT tool - low blast radius, good first target."
     },
     {
@@ -47,7 +68,34 @@
       "enabled": true,
       "priority": 6,
       "default_branch": "main",
+      "visibility": "public",
+      "scope_profile": "full",
       "why": "Published MCP server; keeping it current is real maintenance."
+    },
+
+    {
+      "repo": "augbastos/lucky-cat",
+      "enabled": true,
+      "priority": 7,
+      "default_branch": "master",
+      "visibility": "private",
+      "scope_profile": "maintenance_lite",
+      "family": "lucky-cat",
+      "forbidden_paths": [
+        "site/seocoxinha/**",
+        "ownly_canonical/seocoxinha/**"
+      ],
+      "why": "Tillr, Ownly and PitchPilot all live in this one private repository, next to Stripe, auth and RLS. Narrow scope is not caution, it is the only way this repo can be in the loop at all: a merge to master here is a production deploy, and the seo-coxinha store is frozen by a standing veto."
+    },
+    {
+      "repo": "augbastos/nock",
+      "enabled": true,
+      "priority": 8,
+      "default_branch": "master",
+      "visibility": "private",
+      "scope_profile": "maintenance_lite",
+      "family": "lucky-cat",
+      "why": "Lucky Cat service in its own private repository. Still pre-launch and its visual identity is unsettled, so tests, CI and docs only - nothing that changes how it looks or behaves."
     },
 
     {

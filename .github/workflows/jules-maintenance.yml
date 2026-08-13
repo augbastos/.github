@@ -87,6 +87,14 @@ jobs:
           # Default token. Only ever used to READ public repositories and to push
           # the state file back here - never to write to a target repository.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Read-only fine-grained PAT covering the PRIVATE product repositories
+          # (lucky-cat, nock). The default token above cannot see them at all, and
+          # a 404 from an invisible repository is indistinguishable from "nothing
+          # to do" - so without this secret they are dropped by name, loudly,
+          # rather than quietly triaged as empty. Contents/Issues/Actions: read.
+          # Nothing here ever needs write on a target repo: Jules opens the pull
+          # request through its own GitHub App.
+          MAINTENANCE_READ_TOKEN: ${{ secrets.MAINTENANCE_READ_TOKEN }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           MAINTENANCE_RESULT: ${{ github.workspace }}/maintenance-run.json
           # Every dispatch input reaches the shell through the environment, never
@@ -122,7 +130,11 @@ jobs:
           # file was never committed, every run started from empty state, and
           # rotation kept re-picking priority 1. Staging first makes the check
           # see creations as well as edits.
-          git add maintenance/state.json 2>/dev/null || true
+          #
+          # repos.json is staged too: family discovery appends newly created Lucky
+          # Cat repositories to the allowlist, and an addition that is not
+          # committed would be rediscovered and re-announced on every single run.
+          git add maintenance/state.json maintenance/repos.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "state unchanged"
             exit 0
