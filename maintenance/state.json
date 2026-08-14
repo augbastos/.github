@@ -25,6 +25,11 @@
     "augbastos/deputy-mcp": {
       "last_run": "2026-08-12T14:44:25.596779+00:00",
       "last_outcome": "skipped_no_work"
+    },
+    "augbastos/lucky-cat": {
+      "last_session": "12763389684254386758",
+      "last_run": "2026-08-14T07:49:48.845909+00:00",
+      "last_outcome": "delegated"
     }
   },
   "history": [
@@ -76,6 +81,13 @@
       "repo": "augbastos/scpe",
       "outcome": "skipped_no_work",
       "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-14T07:49:48.845924+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "delegated",
+      "session": "12763389684254386758",
+      "task": "Fix the failing Lucky Cat — Outbox worker workflow on master"
     }
   ]
 }
