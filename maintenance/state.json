@@ -2,13 +2,14 @@
   "schema_version": 1,
   "repos": {
     "augbastos/wavr": {
-      "last_run": "2026-08-12T14:44:28.063287+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-15T18:46:59.161362+00:00",
+      "last_outcome": "skipped_busy",
       "last_session": "8399304794741113534"
     },
     "augbastos/scpe": {
-      "last_run": "2026-08-12T14:44:29.943420+00:00",
-      "last_outcome": "skipped_no_work"
+      "last_run": "2026-08-15T18:47:04.062048+00:00",
+      "last_outcome": "delegated",
+      "last_session": "4078855200949531122"
     },
     "augbastos/devcard": {
       "last_run": "2026-08-15T06:57:29.307298+00:00",
@@ -21,20 +22,21 @@
       "last_session": "148467916441340071"
     },
     "augbastos/scrcpy-tray": {
-      "last_run": "2026-08-12T13:16:30.730730+00:00",
+      "last_run": "2026-08-15T18:46:52.870285+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/deputy-mcp": {
-      "last_run": "2026-08-12T14:44:25.596779+00:00",
-      "last_outcome": "skipped_no_work"
+      "last_run": "2026-08-15T18:46:57.740695+00:00",
+      "last_outcome": "delegated",
+      "last_session": "3446470246814028403"
     },
     "augbastos/lucky-cat": {
       "last_session": "12763389684254386758",
-      "last_run": "2026-08-14T07:49:48.845909+00:00",
-      "last_outcome": "delegated"
+      "last_run": "2026-08-15T18:47:04.430001+00:00",
+      "last_outcome": "skipped_busy"
     },
     "augbastos/nock": {
-      "last_run": "2026-08-15T06:57:17.058169+00:00",
+      "last_run": "2026-08-15T18:47:07.280567+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/aos": {
@@ -146,6 +148,44 @@
       "outcome": "delegated",
       "session": "148467916441340071",
       "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:46:52.870299+00:00",
+      "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-15T18:46:57.740700+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "delegated",
+      "session": "3446470246814028403",
+      "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:46:59.161376+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-15T18:47:04.062053+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "delegated",
+      "session": "4078855200949531122",
+      "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:47:04.430017+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #32 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-15T18:47:07.280584+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
     }
   ],
   "done_work": {
@@ -158,6 +198,18 @@
     "4bc56b79e6efae6b": {
       "ts": "2026-08-15T06:57:33.504643+00:00",
       "repo": "augbastos/rag-demo",
+      "kind": "action_pin",
+      "title": "Pin the actions/checkout action to a commit sha"
+    },
+    "85a09441a3e5e46d": {
+      "ts": "2026-08-15T18:46:57.740676+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "kind": "action_pin",
+      "title": "Pin the actions/checkout action to a commit sha"
+    },
+    "0d6cb14caf7d0bb9": {
+      "ts": "2026-08-15T18:47:04.062030+00:00",
+      "repo": "augbastos/scpe",
       "kind": "action_pin",
       "title": "Pin the actions/checkout action to a commit sha"
     }
