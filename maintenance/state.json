@@ -2,13 +2,13 @@
   "schema_version": 1,
   "repos": {
     "augbastos/wavr": {
-      "last_run": "2026-08-15T18:46:59.161362+00:00",
+      "last_run": "2026-08-16T18:46:40.709489+00:00",
       "last_outcome": "skipped_busy",
       "last_session": "8399304794741113534"
     },
     "augbastos/scpe": {
-      "last_run": "2026-08-15T18:47:04.062048+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-16T18:46:41.008701+00:00",
+      "last_outcome": "skipped_busy",
       "last_session": "4078855200949531122"
     },
     "augbastos/devcard": {
@@ -26,21 +26,21 @@
       "last_outcome": "skipped_no_work"
     },
     "augbastos/deputy-mcp": {
-      "last_run": "2026-08-15T18:46:57.740695+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-16T18:46:39.620783+00:00",
+      "last_outcome": "refused_sensitive",
       "last_session": "3446470246814028403"
     },
     "augbastos/lucky-cat": {
       "last_session": "12763389684254386758",
-      "last_run": "2026-08-15T18:47:04.430001+00:00",
+      "last_run": "2026-08-16T18:46:41.312714+00:00",
       "last_outcome": "skipped_busy"
     },
     "augbastos/nock": {
-      "last_run": "2026-08-15T18:47:07.280567+00:00",
+      "last_run": "2026-08-16T18:46:43.544501+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/aos": {
-      "last_run": "2026-08-16T06:57:54.554873+00:00",
+      "last_run": "2026-08-16T18:46:45.654456+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/council": {
@@ -221,6 +221,42 @@
     {
       "ts": "2026-08-16T06:58:05.312456+00:00",
       "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T18:46:39.620800+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-16T18:46:40.709505+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-16T18:46:41.008718+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T18:46:41.312781+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #32 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T18:46:43.544517+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T18:46:45.654472+00:00",
+      "repo": "augbastos/aos",
       "outcome": "skipped_no_work",
       "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
     }
