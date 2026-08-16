@@ -12,17 +12,17 @@
       "last_session": "4078855200949531122"
     },
     "augbastos/devcard": {
-      "last_run": "2026-08-15T06:57:29.307298+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-16T06:57:59.461151+00:00",
+      "last_outcome": "skipped_busy",
       "last_session": "13641213937012121771"
     },
     "augbastos/rag-demo": {
-      "last_run": "2026-08-15T06:57:33.504659+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-16T06:58:02.956381+00:00",
+      "last_outcome": "refused_sensitive",
       "last_session": "148467916441340071"
     },
     "augbastos/scrcpy-tray": {
-      "last_run": "2026-08-15T18:46:52.870285+00:00",
+      "last_run": "2026-08-16T06:58:05.312441+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/deputy-mcp": {
@@ -40,16 +40,16 @@
       "last_outcome": "skipped_no_work"
     },
     "augbastos/aos": {
-      "last_run": "2026-08-15T06:57:19.880827+00:00",
+      "last_run": "2026-08-16T06:57:54.554873+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/council": {
-      "last_session": "13769629187408212720",
-      "last_run": "2026-08-15T06:57:23.063348+00:00",
+      "last_session": "5963563424504223853",
+      "last_run": "2026-08-16T06:57:57.291144+00:00",
       "last_outcome": "delegated"
     },
     "augbastos/synergy": {
-      "last_run": "2026-08-15T06:57:25.649194+00:00",
+      "last_run": "2026-08-16T06:57:59.222292+00:00",
       "last_outcome": "skipped_no_work"
     }
   },
@@ -184,6 +184,43 @@
     {
       "ts": "2026-08-15T18:47:07.280584+00:00",
       "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:54.554888+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:57.291158+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "5963563424504223853",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-16T06:57:59.222308+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:59.461167+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T06:58:02.956395+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-16T06:58:05.312456+00:00",
+      "repo": "augbastos/scrcpy-tray",
       "outcome": "skipped_no_work",
       "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
     }
