@@ -7,7 +7,7 @@
       "last_session": "8399304794741113534"
     },
     "augbastos/scpe": {
-      "last_run": "2026-08-17T18:56:54.774813+00:00",
+      "last_run": "2026-08-18T18:55:24.204576+00:00",
       "last_outcome": "skipped_busy",
       "last_session": "4078855200949531122"
     },
@@ -32,65 +32,28 @@
     },
     "augbastos/lucky-cat": {
       "last_session": "12763389684254386758",
-      "last_run": "2026-08-17T18:56:55.585120+00:00",
+      "last_run": "2026-08-18T18:55:24.618169+00:00",
       "last_outcome": "skipped_busy"
     },
     "augbastos/nock": {
-      "last_run": "2026-08-17T18:56:58.687529+00:00",
+      "last_run": "2026-08-18T18:55:26.641103+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/aos": {
-      "last_run": "2026-08-17T18:57:01.814952+00:00",
+      "last_run": "2026-08-18T18:55:28.605738+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/council": {
-      "last_session": "14263887845738538726",
-      "last_run": "2026-08-17T18:57:05.009861+00:00",
+      "last_session": "16914395183742652053",
+      "last_run": "2026-08-18T18:55:31.238534+00:00",
       "last_outcome": "delegated"
     },
     "augbastos/synergy": {
-      "last_run": "2026-08-18T07:03:11.393892+00:00",
+      "last_run": "2026-08-18T18:55:33.124556+00:00",
       "last_outcome": "skipped_no_work"
     }
   },
   "history": [
-    {
-      "ts": "2026-08-12T01:55:17.209397+00:00",
-      "repo": "augbastos/scpe",
-      "outcome": "skipped_no_work",
-      "detail": "no failing CI and no actionable open issue"
-    },
-    {
-      "ts": "2026-08-12T13:16:27.242253+00:00",
-      "repo": "augbastos/devcard",
-      "outcome": "skipped_no_work",
-      "detail": "no failing CI and no actionable open issue"
-    },
-    {
-      "ts": "2026-08-12T13:16:29.040227+00:00",
-      "repo": "augbastos/rag-demo",
-      "outcome": "skipped_no_work",
-      "detail": "no failing CI and no actionable open issue"
-    },
-    {
-      "ts": "2026-08-12T13:16:30.730748+00:00",
-      "repo": "augbastos/scrcpy-tray",
-      "outcome": "skipped_no_work",
-      "detail": "no failing CI and no actionable open issue"
-    },
-    {
-      "ts": "2026-08-12T14:44:25.596793+00:00",
-      "repo": "augbastos/deputy-mcp",
-      "outcome": "skipped_no_work",
-      "detail": "no failing CI and no actionable open issue"
-    },
-    {
-      "ts": "2026-08-12T14:44:28.063300+00:00",
-      "repo": "augbastos/wavr",
-      "outcome": "delegated",
-      "session": "8399304794741113534",
-      "task": "Fix the failing tests workflow on master"
-    },
     {
       "ts": "2026-08-12T14:44:29.943435+00:00",
       "repo": "augbastos/scpe",
@@ -363,6 +326,43 @@
       "repo": "augbastos/wavr",
       "outcome": "skipped_busy",
       "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-18T18:55:24.204593+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-18T18:55:24.618231+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "existing branch jules/refuse-outbox-fix-12763389684254386758"
+    },
+    {
+      "ts": "2026-08-18T18:55:26.641118+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-18T18:55:28.605756+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-18T18:55:31.238551+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "16914395183742652053",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-18T18:55:33.124574+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
     }
   ],
   "done_work": {
