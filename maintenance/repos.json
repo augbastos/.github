@@ -5,10 +5,15 @@
     "Order of work is least-recently-maintained first, priority as tiebreak.",
     "",
     "Only Augusto flips enabled on an existing entry. Automation may ADD an entry",
-    "for a repository carrying the 'lucky-cat' topic - every Lucky Cat service is",
-    "maintained from birth - and those arrive on the narrow scope profile. It may",
-    "never rewrite an entry that is already here, so a repository turned off stays",
-    "off.",
+    "for a repository carrying the 'luckycat-product' topic - every Lucky Cat",
+    "service is maintained from birth - and those arrive on the narrow scope",
+    "profile. It may never rewrite an entry that is already here, so a repository",
+    "turned off stays off.",
+    "",
+    "This file is world-readable: the repository that holds it is public because",
+    "public repos only inherit community health files from a public .github. Keep",
+    "every 'why' operational. It may say what the loop is allowed to do and why the",
+    "scope is narrow; it may not describe what is inside a private repository.",
     "",
     "visibility: 'private' repositories are read with MAINTENANCE_READ_TOKEN and are",
     "skipped entirely when that secret is absent. scope_profile: 'full' allows any",
@@ -85,7 +90,7 @@
         "site/seocoxinha/**",
         "ownly_canonical/seocoxinha/**"
       ],
-      "why": "Tillr, Ownly and PitchPilot all live in this one private repository, next to Stripe, auth and RLS. Narrow scope is not caution, it is the only way this repo can be in the loop at all: a merge to master here is a production deploy, and the seo-coxinha store is frozen by a standing veto."
+      "why": "Private product repository. Narrow scope is not caution, it is the only way it can be in the loop at all: a merge to the default branch deploys production, and the paths listed above are frozen by a standing veto."
     },
     {
       "repo": "augbastos/nock",
@@ -95,7 +100,7 @@
       "visibility": "private",
       "scope_profile": "maintenance_lite",
       "family": "lucky-cat",
-      "why": "Lucky Cat service in its own private repository. Still pre-launch and its visual identity is unsettled, so tests, CI and docs only - nothing that changes how it looks or behaves."
+      "why": "Private product repository, pre-launch. Tests, CI and docs only, nothing that changes how it looks or behaves."
     },
 
     {

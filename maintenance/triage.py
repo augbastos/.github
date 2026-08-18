@@ -187,7 +187,16 @@ PROACTIVE_KINDS = {"backlog", "action_pin"}
 #   - discovery may only ADD. An entry already in repos.json is never rewritten,
 #     so a repository Augusto turned off stays off forever.
 #   - auto-added entries land on the narrow scope profile, never on 'full'.
-FAMILY_TOPIC = "lucky-cat"
+#
+# The topic and the allowlist's `family` key are deliberately two names, not one.
+# The topic is the discovery trigger and reads as a claim about the product it
+# marks; the family key groups entries inside this file. Renamed 2026-08-18: the
+# old topic was called `lucky-cat`, the same string as the repository, which made
+# it impossible to tell whether a tag meant "this is a product" or "the loop
+# maintains this". Both topics are set on every family repository during the
+# migration, so discovery keeps working until the old one is removed by hand.
+FAMILY_TOPIC = "luckycat-product"
+FAMILY_KEY = "lucky-cat"
 FAMILY_SCOPE_PROFILE = "maintenance_lite"
 
 # What a repository's scope profile allows. 'full' is the historical behaviour:
@@ -336,7 +345,7 @@ def discover_family_repos(repos, token):
             "default_branch": item.get("default_branch") or "main",
             "visibility": "private" if item.get("private") else "public",
             "scope_profile": FAMILY_SCOPE_PROFILE,
-            "family": FAMILY_TOPIC,
+            "family": FAMILY_KEY,
             "why": (f"AUTO-ADDED: carries the '{FAMILY_TOPIC}' topic. Every Lucky Cat "
                     f"service is maintained from birth. Narrow scope by default - "
                     f"widen it only by editing this entry by hand."),
