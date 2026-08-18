@@ -2,38 +2,58 @@
   "schema_version": 1,
   "repos": {
     "augbastos/wavr": {
-      "last_run": "2026-08-12T14:44:28.063287+00:00",
-      "last_outcome": "delegated",
+      "last_run": "2026-08-18T07:03:20.434782+00:00",
+      "last_outcome": "skipped_busy",
       "last_session": "8399304794741113534"
     },
     "augbastos/scpe": {
-      "last_run": "2026-08-12T14:44:29.943420+00:00",
-      "last_outcome": "skipped_no_work"
+      "last_run": "2026-08-17T18:56:54.774813+00:00",
+      "last_outcome": "skipped_busy",
+      "last_session": "4078855200949531122"
     },
     "augbastos/devcard": {
-      "last_run": "2026-08-12T13:16:27.242238+00:00",
-      "last_outcome": "skipped_no_work"
+      "last_run": "2026-08-18T07:03:11.614341+00:00",
+      "last_outcome": "skipped_busy",
+      "last_session": "13641213937012121771"
     },
     "augbastos/rag-demo": {
-      "last_run": "2026-08-12T13:16:29.040211+00:00",
-      "last_outcome": "skipped_no_work"
+      "last_run": "2026-08-18T07:03:14.510059+00:00",
+      "last_outcome": "refused_sensitive",
+      "last_session": "148467916441340071"
     },
     "augbastos/scrcpy-tray": {
-      "last_run": "2026-08-12T13:16:30.730730+00:00",
+      "last_run": "2026-08-18T07:03:16.609765+00:00",
       "last_outcome": "skipped_no_work"
     },
     "augbastos/deputy-mcp": {
-      "last_run": "2026-08-12T14:44:25.596779+00:00",
+      "last_run": "2026-08-18T07:03:19.372879+00:00",
+      "last_outcome": "refused_sensitive",
+      "last_session": "3446470246814028403"
+    },
+    "augbastos/lucky-cat": {
+      "last_session": "12763389684254386758",
+      "last_run": "2026-08-17T18:56:55.585120+00:00",
+      "last_outcome": "skipped_busy"
+    },
+    "augbastos/nock": {
+      "last_run": "2026-08-17T18:56:58.687529+00:00",
+      "last_outcome": "skipped_no_work"
+    },
+    "augbastos/aos": {
+      "last_run": "2026-08-17T18:57:01.814952+00:00",
+      "last_outcome": "skipped_no_work"
+    },
+    "augbastos/council": {
+      "last_session": "14263887845738538726",
+      "last_run": "2026-08-17T18:57:05.009861+00:00",
+      "last_outcome": "delegated"
+    },
+    "augbastos/synergy": {
+      "last_run": "2026-08-18T07:03:11.393892+00:00",
       "last_outcome": "skipped_no_work"
     }
   },
   "history": [
-    {
-      "ts": "2026-08-12T01:54:40.417615+00:00",
-      "repo": "augbastos/wavr",
-      "outcome": "skipped_busy",
-      "detail": "live Jules session 5738273773848449738 (IN_PROGRESS)"
-    },
     {
       "ts": "2026-08-12T01:55:17.209397+00:00",
       "repo": "augbastos/scpe",
@@ -76,6 +96,299 @@
       "repo": "augbastos/scpe",
       "outcome": "skipped_no_work",
       "detail": "no failing CI and no actionable open issue"
+    },
+    {
+      "ts": "2026-08-14T07:49:48.845924+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "delegated",
+      "session": "12763389684254386758",
+      "task": "Fix the failing Lucky Cat — Outbox worker workflow on master"
+    },
+    {
+      "ts": "2026-08-15T06:57:17.058180+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-15T06:57:19.880842+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-15T06:57:23.063358+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "13769629187408212720",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-15T06:57:25.649206+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-15T06:57:29.307302+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "delegated",
+      "session": "13641213937012121771",
+      "task": "Pin the actions/download-artifact action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T06:57:33.504663+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "delegated",
+      "session": "148467916441340071",
+      "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:46:52.870299+00:00",
+      "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-15T18:46:57.740700+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "delegated",
+      "session": "3446470246814028403",
+      "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:46:59.161376+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-15T18:47:04.062053+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "delegated",
+      "session": "4078855200949531122",
+      "task": "Pin the actions/checkout action to a commit sha"
+    },
+    {
+      "ts": "2026-08-15T18:47:04.430017+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #32 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-15T18:47:07.280584+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:54.554888+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:57.291158+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "5963563424504223853",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-16T06:57:59.222308+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T06:57:59.461167+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T06:58:02.956395+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-16T06:58:05.312456+00:00",
+      "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T18:46:39.620800+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-16T18:46:40.709505+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-16T18:46:41.008718+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T18:46:41.312781+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #32 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-16T18:46:43.544517+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-16T18:46:45.654472+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-17T07:15:26.838569+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "4772249356960982413",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-17T07:15:29.251512+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-17T07:15:29.553163+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-17T07:15:33.522003+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-17T07:15:36.593466+00:00",
+      "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-17T07:15:40.255891+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-17T18:56:54.377943+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
+    },
+    {
+      "ts": "2026-08-17T18:56:54.774829+00:00",
+      "repo": "augbastos/scpe",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-17T18:56:55.585136+00:00",
+      "repo": "augbastos/lucky-cat",
+      "outcome": "skipped_busy",
+      "detail": "existing branch jules/refuse-outbox-fix-12763389684254386758"
+    },
+    {
+      "ts": "2026-08-17T18:56:58.687545+00:00",
+      "repo": "augbastos/nock",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-17T18:57:01.814968+00:00",
+      "repo": "augbastos/aos",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-17T18:57:05.009877+00:00",
+      "repo": "augbastos/council",
+      "outcome": "delegated",
+      "session": "14263887845738538726",
+      "task": "Fix the failing eval workflow on master"
+    },
+    {
+      "ts": "2026-08-18T07:03:11.393908+00:00",
+      "repo": "augbastos/synergy",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-18T07:03:11.614359+00:00",
+      "repo": "augbastos/devcard",
+      "outcome": "skipped_busy",
+      "detail": "open maintenance PR #2 (Jules reports having opened it)"
+    },
+    {
+      "ts": "2026-08-18T07:03:14.510079+00:00",
+      "repo": "augbastos/rag-demo",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-18T07:03:16.609781+00:00",
+      "repo": "augbastos/scrcpy-tray",
+      "outcome": "skipped_no_work",
+      "detail": "no failing CI, no actionable open issue, no unchecked backlog item and no unpinned or stale action reference"
+    },
+    {
+      "ts": "2026-08-18T07:03:19.372894+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "outcome": "refused_sensitive",
+      "detail": "['release']"
+    },
+    {
+      "ts": "2026-08-18T07:03:20.434793+00:00",
+      "repo": "augbastos/wavr",
+      "outcome": "skipped_busy",
+      "detail": "live Jules session 2992972726547113780 (AWAITING_USER_FEEDBACK)"
     }
-  ]
+  ],
+  "done_work": {
+    "0cc669209be55942": {
+      "ts": "2026-08-15T06:57:29.307284+00:00",
+      "repo": "augbastos/devcard",
+      "kind": "action_pin",
+      "title": "Pin the actions/download-artifact action to a commit sha"
+    },
+    "4bc56b79e6efae6b": {
+      "ts": "2026-08-15T06:57:33.504643+00:00",
+      "repo": "augbastos/rag-demo",
+      "kind": "action_pin",
+      "title": "Pin the actions/checkout action to a commit sha"
+    },
+    "85a09441a3e5e46d": {
+      "ts": "2026-08-15T18:46:57.740676+00:00",
+      "repo": "augbastos/deputy-mcp",
+      "kind": "action_pin",
+      "title": "Pin the actions/checkout action to a commit sha"
+    },
+    "0d6cb14caf7d0bb9": {
+      "ts": "2026-08-15T18:47:04.062030+00:00",
+      "repo": "augbastos/scpe",
+      "kind": "action_pin",
+      "title": "Pin the actions/checkout action to a commit sha"
+    }
+  }
 }
