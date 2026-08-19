@@ -11,7 +11,7 @@ rather than silently triaged as empty.
 
 ```
 schedule (twice daily, 06:17 and 18:17 UTC)
-   -> add any repo carrying the 'lucky-cat' topic that is not listed yet
+   -> add any repo carrying the 'luckycat-product' topic that is not listed yet
    -> no MAINTENANCE_READ_TOKEN? drop the private repos, by name, in the summary
    -> ask Jules which pull requests it opened (authoritative PR ownership)
    -> review backlog already at MAX_OPEN_MAINTENANCE_PRS?         -> SKIP THE RUN
@@ -122,7 +122,7 @@ where the standing `seo-coxinha` veto lives.
 
 ## New Lucky Cat services join on their own
 
-A repository carrying the `lucky-cat` GitHub topic is appended to the allowlist
+A repository carrying the `luckycat-product` GitHub topic is appended to the allowlist
 automatically, enabled, on the narrow profile. Tag a new service with that topic
 when you create it and background maintenance picks it up on the next run.
 
