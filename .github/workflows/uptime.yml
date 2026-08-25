@@ -1,0 +1,46 @@
+name: uptime
+
+# Vigia dos endereços públicos do Augusto: portfólio, devcard, Tillr, Ownly, a página
+# do SCPE e o site do Lucky Cat.
+#
+# CUSTO ZERO, SEM PRAZO. A política do GitHub é explícita: "GitHub Actions usage is free
+# for self-hosted runners and for public repositories that use standard GitHub-hosted
+# runners". Este repositório é público e o runner é o padrão. A única exceção da política
+# são os "larger runners", que não aparecem aqui. Não há franquia a estourar nem promoção
+# a expirar — não é cota, é gratuidade de repositório público.
+#
+# POR QUE EXISTE, se já há OpenStatus: o plano gratuito de lá dá UM monitor, e ele está
+# no luckycat.ie, que é onde há caminho de dinheiro e merece as quatro regiões. Os outros
+# cinco endereços não tinham vigilância nenhuma.
+#
+# LIMITAÇÃO HONESTA: o agendamento do GitHub não é pontual. Em horário de pico um cron de
+# 30 minutos pode virar 45 ou 60. Para "meu site está no ar?" isso serve; para medir SLA
+# ao minuto, não serve — e é por isso que o OpenStatus continua onde está.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:        # para rodar na hora, sem esperar o cron
+
+permissions:
+  issues: write             # abrir, comentar e FECHAR a issue de incidente
+  contents: read
+
+concurrency:
+  # Duas execuções ao mesmo tempo abririam duas issues para a mesma queda.
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest          # runner padrão = grátis em repo público
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - name: Check every public endpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/uptime_check.py
