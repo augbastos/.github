@@ -14,26 +14,23 @@ files from a private `.github`.
 requests here — every pull request must disclose whether AI was used, in a form a
 parser can find. Several repositories fail the check without it.
 
-## 2. Background maintenance
+## 2. Background maintenance — moved out of this repository
 
-A scheduled loop that finds justified maintenance work in allowlisted repositories
-and delegates one task at a time to [Jules](https://jules.google), running on GitHub
-Actions with no machine of mine switched on. **Nothing is ever merged by it** — every
-result arrives as a pull request awaiting review.
+A scheduled loop that finds justified maintenance work in allowlisted repositories and
+delegates one task at a time to [Jules](https://jules.google), never merging anything,
+**used to live here**. It has moved to a private repository.
 
-Being public is not consent: a repository is maintained only if it is listed in
-`maintenance/repos.json` with `enabled: true`. Sensitive areas are gated by
-`maintenance/sensitive_task.py`, and finding nothing is a successful run.
+It was here only because this is where the scheduled workflow happened to be written,
+and this repository has to be public for community health files to be inherited. Its
+allowlist has to carry literal repository names and literal frozen paths — that is how
+the gate matches — so keeping it here meant publishing which private repositories
+exist, which one deploys production on its default branch, and a frozen path inside it
+named after a real business. The file that held it opened by forbidding exactly that:
 
-Full description, including the triage order and the scope profiles, in
-[`maintenance/README.md`](maintenance/README.md).
+> *"This file is world-readable […] it may not describe what is inside a private
+> repository."*
 
-| Path | What it is |
-|---|---|
-| `.github/workflows/jules-maintenance.yml` | the schedule and the only entry point |
-| `maintenance/repos.json` | the allowlist: visibility, scope profile, frozen paths |
-| `maintenance/triage.py` | rotation, triage, duplicate check, brief, Jules call |
-| `maintenance/sensitive_task.py` | what may never be delegated unattended |
+Nothing about the loop changed in the move: same schedule, same gates, same tests.
 
 ## 3. Reusable SCPE workflows
 
