@@ -1,0 +1,18 @@
+# This repository is PUBLIC. Anything staged here is published.
+# The maintenance loop was moved to a private repository; its working copy and
+# run artefacts may still sit in this directory. Keep them out of the index.
+maintenance/
+maintenance-run.json
+error.log
+.github/workflows/jules-maintenance.yml
+.github/workflows/automerge-reusable.yml
+
+# Local noise
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.DS_Store
+Thumbs.db
