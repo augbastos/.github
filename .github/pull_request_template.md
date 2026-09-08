@@ -33,4 +33,4 @@
 ## Checks
 
 - [ ] Tests pass locally, or this change carries no code
-- [ ] I read [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [ ] I read [CONTRIBUTING.md](https://github.com/augbastos/.github/blob/main/CONTRIBUTING.md)

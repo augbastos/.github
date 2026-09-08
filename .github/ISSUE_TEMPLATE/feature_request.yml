@@ -1,0 +1,29 @@
+name: Feature request
+description: Propose something the project does not do yet
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >
+        What are you trying to do that is hard or impossible today? Describe the problem,
+        not the solution - the best answer is often not the one either of us thought of first.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: Optional. If you already have a shape in mind, describe it.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: Workarounds, other tools, why they were not enough.
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to open a pull request for this
