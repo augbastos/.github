@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/augbastos/.github/blob/main/SECURITY.md
+    about: Report privately. Never in a public issue.
+  - name: How to contribute
+    url: https://github.com/augbastos/.github/blob/main/CONTRIBUTING.md
+    about: Branch naming, commit format, what happens to your PR.
+  - name: Support and scope
+    url: https://github.com/augbastos/.github/blob/main/SUPPORT.md
+    about: What these projects are, and what they are not.
