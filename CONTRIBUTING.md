@@ -49,9 +49,7 @@ that has to follow this. Individual commits on your branch can be as messy as yo
 - CI green, and green because it passes, not because a check was removed
 - fill in the AI-use box in the template
 
-That last one is not a formality. Several of these repositories gate on
-[SCPE](https://github.com/augbastos/scpe) and a PR with no disclosure fails the check. Both
-answers are fine; only silence fails. Naming the tool and what you used it for helps a reviewer
+That last one matters. Both answers are fine; only silence is not. Naming the tool and what you used it for helps a reviewer
 calibrate, and that is the whole point of asking.
 
 ## What happens next
