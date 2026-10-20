@@ -1,7 +1,6 @@
 <!--
-  This repository gates on its own protocol. The AI-use disclosure below is not a
-  formality: a check fails without it (SCPE level 1). Tick exactly one box, or add an
-  Assisted-by trailer to a commit message instead — either form satisfies the gate.
+  Please fill in the AI-use disclosure below: tick exactly one box, or add an
+  Assisted-by trailer to a commit message instead.
 -->
 
 ## What this changes
