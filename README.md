@@ -40,13 +40,25 @@ All three run on GitHub-hosted runners and only on this repository.
 - **safety** runs on every pull request. It fails if a commit in the PR introduces a
   secret (scanned with gitleaks), or if a changed file matches a rule in
   `.github/safety-critical.txt` on the base branch. Changes to the check itself also
-  need the owner.
+  need the owner. That file is currently absent, so only the secret scan and the
+  self-protection rule apply.
 - **dependabot-automerge** arms squash auto-merge on Dependabot pull requests that are
   not major version updates. Major updates stay open for review.
 - **uptime** runs every 30 minutes and on manual dispatch. For each address,
-  `scripts/uptime_check.py` retries 3 times before it reports a failure, then opens one
-  issue labelled `uptime` per outage, updates it while the outage lasts, and closes it
+  `scripts/uptime_check.py` tries 3 times, 20 seconds apart, before it reports a failure,
+  then opens one issue labelled `uptime` per outage, updates it while the outage lasts, and closes it
   when the address answers again. GitHub scheduling is not exact, so runs can be late.
+  The badge at the top shows that the checker ran. It stays green during an outage,
+  which is reported as an issue.
+
+## Run the uptime check by hand
+
+With the GitHub CLI, from a clone of this repository:
+
+```sh
+gh workflow run uptime.yml
+gh run list --workflow uptime.yml --limit 3
+```
 
 ## Licence
 
